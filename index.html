@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AventurIA</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <aside class="sidebar left">
+      <h1 class="appBrand"><span class="appLogoIcon" aria-hidden="true"></span><span class="appTitleText">AventurIA</span></h1>
+
+      <section class="panel">
+        <h2>Archivo</h2>
+        <div class="fileMenu">
+          <button id="newProjectBtn" type="button">Nuevo proyecto</button>
+          <button id="saveProjectBtn" type="button">Guardar</button>
+          <button id="saveAsAveBtn" type="button">Guardar como .ave</button>
+          <button id="loadProjectBtn" type="button">Cargar proyecto</button>
+          <button id="saveLocalDbBtn" type="button">Guardar localmente</button>
+          <button id="loadLocalDbBtn" type="button">Cargar localmente</button>
+          <button id="exportJsonBtn" type="button">Exportar JSON</button>
+          <button id="publishProjectBtn" type="button">Publicar</button>
+        </div>
+        <p id="currentProjectFileInfo" class="hint">Proyecto sin archivo asociado. “Guardar localmente” usa IndexedDB del navegador; “Guardar como .ave” crea un archivo exportable.</p>
+        <input id="loadProjectInput" class="hiddenFileInput" type="file" accept=".ave,.json,application/json" />
+
+        <label>Escena inicial
+          <select id="startSceneSelect"></select>
+        </label>
+        <h3>Splash inicial</h3>
+        <label class="check"><input id="splashEnabledInput" type="checkbox" /> Mostrar splash al iniciar Play</label>
+        <label>Imagen splash
+          <select id="splashImageSelect"></select>
+        </label>
+        <button id="importSplashImageBtn" type="button">Importar imagen splash</button>
+        <input id="splashImageInput" class="hiddenFileInput" type="file" accept="image/*" />
+
+        <label>Audio splash
+          <select id="splashAudioSelect"></select>
+        </label>
+        <button id="importSplashAudioBtn" type="button">Importar audio splash</button>
+        <input id="splashAudioInput" class="hiddenFileInput" type="file" accept="audio/*" />
+        <div class="grid2">
+          <label>Duración ms <input id="splashDurationInput" type="number" min="0" step="250" value="2500" /></label>
+          <label class="check"><input id="splashSkipInput" type="checkbox" /> Permitir saltar</label>
+        </div>
+
+      </section>
+
+      <section class="panel inventorySettingsPanel">
+        <h2>Inventario</h2>
+
+        <div class="grid2">
+          <label>Slots máximos
+            <input id="inventorySlotsInput" type="number" min="1" value="8" />
+          </label>
+          <label>Tamaño cuadrícula / slot
+            <input id="inventorySlotSizeInput" type="number" min="24" max="160" value="72" />
+          </label>
+        </div>
+
+        <label>Posición en pantalla
+          <select id="inventoryPositionInput">
+            <option value="top-left">Esquina superior izquierda</option>
+            <option value="top-center">Centrado arriba</option>
+            <option value="top-right">Esquina superior derecha</option>
+            <option value="bottom-left">Esquina inferior izquierda</option>
+            <option value="bottom-center">Centrado abajo</option>
+            <option value="bottom-right">Esquina inferior derecha</option>
+          </select>
+        </label>
+
+        <button id="loadInventoryIconBtn">🎒 Cargar icono inventario</button>
+        <input id="inventoryIconInput" class="hiddenFileInput" type="file" accept="image/*" />
+
+        <div class="grid2">
+          <label>Ancho icono <input id="inventoryIconWInput" type="number" min="16" value="72" /></label>
+          <label>Alto icono <input id="inventoryIconHInput" type="number" min="16" value="72" /></label>
+        </div>
+
+        <label>Mensaje si está lleno
+          <textarea id="inventoryFullMessageInput" rows="2">El inventario está lleno.</textarea>
+        </label>
+      </section>
+
+      <section class="panel">
+        <h2>Carteles</h2>
+        <label>Posición
+          <select id="messagePositionInput">
+            <option value="top">Arriba</option>
+            <option value="center">Centro</option>
+            <option value="bottom">Abajo</option>
+          </select>
+        </label>
+        <label>Tipo de letra
+          <input id="messageFontInput" type="text" value="Arial, sans-serif" />
+        </label>
+        <div class="grid2">
+          <label>Tamaño <input id="messageSizeInput" type="number" min="8" max="96" value="18" /></label>
+          <label>Radio <input id="messageRadiusInput" type="number" min="0" max="64" value="10" /></label>
+        </div>
+        <div class="grid2">
+          <label>Color texto <input id="messageColorInput" type="color" value="#ffffff" /></label>
+          <label>Fondo <input id="messageBgInput" type="color" value="#111111" /></label>
+        </div>
+        <div class="grid2">
+          <label>Opacidad fondo <input id="messageBgAlphaInput" type="number" min="0" max="1" step="0.05" value="0.85" /></label>
+          <label>Ancho máx. % <input id="messageMaxWidthInput" type="number" min="20" max="100" value="80" /></label>
+        </div>
+        <button id="testMessageStyleBtn" type="button">Probar cartel</button>
+      </section>
+
+      <section class="panel">
+        <h2>Escenas</h2>
+        <div class="row">
+          <input id="sceneNameInput" type="text" placeholder="Nombre de escena" />
+          <button id="addSceneBtn">➕ Escena</button>
+        </div>
+        <ul id="sceneList" class="list"></ul>
+      </section>
+<section class="panel">
+        <h2>Assets</h2>
+        <button id="importImagesBtn">Importar imágenes</button>
+        <input id="imageAssetInput" class="hiddenFileInput" type="file" accept="image/*" multiple />
+        <button id="importAudioBtn">🔊 Importar audio</button>
+        <input id="audioAssetInput" class="hiddenFileInput" type="file" accept="audio/*" multiple />
+        <input id="sceneAudioInput" class="hiddenFileInput" type="file" accept="audio/*" multiple />
+        <h3>Imágenes</h3>
+        <div id="imageAssetGrid" class="assetGrid"></div>
+        <div id="imageAssetManagerActions" class="assetManagerActions">
+          <p id="selectedImageAssetInfo" class="hint">Ninguna imagen seleccionada.</p>
+          <button id="applySelectedImageToObjectBtn" type="button">Aplicar imagen al objeto seleccionado</button>
+          <button id="replaceSelectedImageAssetBtn" type="button">Reemplazar imagen seleccionada</button>
+          <button id="deleteSelectedImageAssetBtn" class="danger" type="button">Eliminar imagen seleccionada</button>
+          <input id="replaceImageAssetInput" class="hiddenFileInput" type="file" accept="image/*" />
+        </div>
+        <h3>Audio</h3>
+        <div id="audioAssetList" class="audioList"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Prefabs</h2>
+        <button id="createPrefabBtn">★ Crear prefab</button>
+        <button id="instantiatePrefabBtn">⬇ Instanciar prefab</button>
+        <button id="deletePrefabBtn" class="danger" disabled>Eliminar prefab</button>
+        <ul id="prefabList" class="list"></ul>
+        <p class="hint">Guarda objetos reutilizables con su spritesheet, propiedades y nodos asociados.</p>
+      </section>
+
+      <section class="panel">
+        <h2>Outliner</h2>
+        <ul id="objectList" class="list"></ul>
+      </section>
+    </aside>
+
+    <main class="workspace">
+      <header class="toolbar">
+        <div class="modeToolGroup" aria-label="Modos">
+          <div class="topToolbarGroups">
+  <div class="toolbarGroup toolbarGroupMode toolbarGroupBox">
+    <button id="editorModeBtn" class="active modeIconBtn" title="Editor" aria-label="Editor">✎</button>
+    <button id="playModeBtn" class="modeIconBtn" title="Play" aria-label="Play">▶</button>
+    <button id="stopModeBtn" class="modeIconBtn" title="Stop" aria-label="Stop">■</button>
+    <button id="undoBtn" class="modeIconBtn" title="Deshacer" aria-label="Deshacer">↶</button>
+    <button id="redoBtn" class="modeIconBtn" title="Rehacer" aria-label="Rehacer">↷</button>
+  </div>
+<div class="toolbarGroup toolbarGroupEditors toolbarGroupBox">
+    <button id="nodesModeBtn" class="modeIconBtn" title="Nodos" aria-label="Nodos">⬢</button>
+    <button id="mechanismsModeBtn" class="modeIconBtn" title="Mecanismos" aria-label="Mecanismos">⚙</button>
+    <button id="animationsModeBtn" class="modeIconBtn" title="Animaciones" aria-label="Animaciones">◇</button>
+    <button id="physicsModeBtn" class="modeIconBtn" title="Física" aria-label="Física">●</button>
+  </div>
+</div>
+        </div>
+        <div class="topToolGroup" aria-label="Herramientas">
+          <button id="selectToolBtn" class="active iconToolBtn" title="Seleccionar" aria-label="Seleccionar">↖</button>
+          <button id="navToolBtn" class="iconToolBtn" title="Crear zona navegable" aria-label="Crear zona navegable">✏</button>
+          <button id="navEditToolBtn" class="iconToolBtn" title="Editar zona navegable" aria-label="Editar zona navegable">✥</button>
+          <button id="closeZoneBtn" class="iconToolBtn" title="Cerrar zona navegable" aria-label="Cerrar zona navegable">✓</button>
+          <button id="cancelZoneBtn" class="iconToolBtn" title="Cancelar zona navegable" aria-label="Cancelar zona navegable">✕</button>
+          <span class="toolSep"></span>
+          <button id="addPlayerBtn" class="iconToolBtn" title="Añadir player" aria-label="Añadir player">🤖</button>
+          <button id="addBackgroundBtn" class="iconToolBtn" title="Añadir fondo" aria-label="Añadir fondo">🌄</button>
+          <button id="addHotspotBtn" class="iconToolBtn" title="Añadir hotspot" aria-label="Añadir hotspot">◎</button>
+          <button id="addPropBtn" class="iconToolBtn" title="Añadir objeto" aria-label="Añadir objeto">📦</button>
+          <button id="duplicateBtn" class="iconToolBtn" title="Duplicar objeto" aria-label="Duplicar objeto">⧉</button>
+          <button id="openColliderEditorBtn" class="iconToolBtn" type="button" title="Editar collider" aria-label="Editar collider">▣</button>
+          <button id="openFootprintEditorBtn" class="iconToolBtn footprintToolBtn" type="button" title="Editar huella de pathfinding" aria-label="Editar huella de pathfinding">◉</button>
+        </div>
+        <span class="zoomControlGroup">
+          <span id="zoomStatus" title="Zoom visual de edición">100%</span>
+          <button id="resetZoomBtn" class="zoomResetBtn" type="button" title="Restablecer zoom" aria-label="Restablecer zoom">⟲</button>
+        </span>
+        <span id="statusText">Modo editor</span>
+        <span id="jsErrorBox" class="jsErrorBox hidden"></span>
+      </header>
+
+      <div id="stageWrap">
+        <div id="stage" tabindex="0">
+          <svg id="navLayer"></svg>
+          <svg id="physicsDebugLayer" class="physicsDebugLayer"></svg>
+          <div id="messageBox"></div>
+<pre id="audioGraphDebugLog"></pre>
+  </div>
+          <div id="gameInventory" class="gameInventory"></div>
+          <div id="mechanismRuntime" class="mechanismRuntime hidden"></div>
+          <div id="splashScreen" class="splashScreen hidden"></div>
+          <div id="inventoryCursor" class="inventoryCursor hidden"></div>
+        </div>
+      </div>
+
+      <div id="logicEditor" class="logicEditor hidden">
+        <header>
+          <strong>Editor de nodos</strong>
+          <select id="newNodeCategory">
+            <option value="event">Evento</option>
+            <option value="input">Input</option>
+            <option value="entity">Entidad</option>
+            <option value="trigger">Trigger</option>
+            <option value="action">Acción</option>
+            <option value="animation">Animación</option>
+            <option value="condition">Condición</option>
+            <option value="data">Dato</option>
+            <option value="mechanism">Mecanismo</option>
+          </select>
+          <select id="newNodeType"></select>
+          <button id="addNodeBtn">➕ Nodo</button>
+          <button id="testGraphBtn">▶ Probar grafo</button>
+          <button id="deleteNodeBtn">🗑️ Borrar nodo</button>
+          <button id="deleteLinkBtn">⛓️ Borrar conexión</button>
+        </header>
+        <div class="logicBody">
+          <svg id="wireLayer"></svg>
+          <div id="nodeCanvas"></div>
+        </div>
+      </div>
+    
+      
+
+      <div id="physicsEditor" class="physicsEditor hidden">
+        <header class="physicsEditorHeader">
+          <strong>Editor de física</strong>
+          <span id="physicsEditorModeBadge">Matter.js</span>
+          <button id="physicsSelectToolBtn" type="button" class="active">Seleccionar</button>
+          <button id="physicsBoxToolBtn" type="button">Caja</button>
+          <button id="physicsCircleToolBtn" type="button">Círculo</button>
+          <button id="physicsSensorToolBtn" type="button">Sensor</button>
+          <button id="physicsEditColliderBtn" type="button">Editar collider</button>
+          <button id="physicsToggleDebugBtn" type="button">Mostrar cuerpos</button>
+          <button id="physicsPreviewBtn" type="button">▶ Probar</button>
+          <button id="physicsStopPreviewBtn" type="button">■ Stop</button>
+          <button id="physicsResetBtn" type="button">Reset</button>
+        </header>
+
+        <div class="physicsEditorBody">
+          <section class="physicsEditorInspector">
+            <h3>Objeto físico seleccionado</h3>
+            <p id="physicsSelectedInfo" class="physicsSelectedInfo">Selecciona un objeto de la escena o un cuerpo del overlay.</p>
+
+            <div class="physicsQuickGrid">
+              <button id="physicsMakeDynamicBtn" type="button">Dinámico</button>
+              <button id="physicsMakeStaticBtn" type="button">Estático</button>
+              <button id="physicsMakeSensorBtn" type="button">Sensor</button>
+              <button id="physicsDisableObjectBtn" type="button">Desactivar física</button>
+            </div>
+
+            <h3>Collider / cuerpo</h3>
+            <p class="hint">El overlay físico se dibuja sobre la escena. Haz clic en un cuerpo para seleccionarlo. Usa “Editar collider” para abrir el editor visual de puntos/polígono del objeto seleccionado.</p>
+            <ul class="physicsLegend">
+              <li><span class="legendBox dynamic"></span> Dinámico</li>
+              <li><span class="legendBox static"></span> Estático</li>
+              <li><span class="legendBox sensor"></span> Sensor</li>
+              <li><span class="legendBox domain"></span> Dominio físico</li>
+            </ul>
+          </section>
+        </div>
+      </div>
+
+      <div id="animationEditor" class="animationEditor hidden">
+        <header>
+          <strong>Editor de animaciones</strong>
+          <select id="animObjectSelect"></select>
+          <button id="addTransformClipBtn" type="button">+ Clip</button>
+          <button id="deleteTransformClipBtn" type="button" class="danger">Eliminar clip</button>
+          <button id="previewTransformClipBtn" type="button">▶ Preview</button>
+          <button id="stopTransformClipBtn" type="button">■ Stop</button>
+        </header>
+
+        <div class="animationLayout">
+          <aside class="animationClipPanel">
+            <h2>Clips</h2>
+            <ul id="transformClipList" class="list"></ul>
+            <p class="hint">Clips de transformación: posición, rotación y escala. No modifican spritesheet.</p>
+          </aside>
+
+          <section class="animationInspector">
+            <h2>Clip</h2>
+            <div class="grid3">
+              <label>Nombre <input id="transformClipName" type="text" /></label>
+              <label>Duración ms <input id="transformClipDuration" type="number" min="1" step="100" /></label>
+              <label>Modo
+                <select id="transformClipMode">
+                  <option value="once">Una vez</option>
+                  <option value="loop">Loop</option>
+                  <option value="pingpong">Ping-pong</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="animationTabs">
+              <button id="transformAnimTabBtn" class="active" type="button">Transform</button>
+              <button id="pathAnimTabBtn" type="button">Path</button>
+            </div>
+
+            <div id="transformAnimPanel" class="animationTabPanel active">
+
+            <div class="animationVisualPanel">
+              <section class="animationPreviewPanel">
+                <header>
+                  <strong>Preview</strong>
+                  <span id="animationPreviewTime">0 ms</span>
+                </header>
+                <div id="animationPreviewStage" class="animationPreviewStage">
+                  <div id="animationPreviewObject" class="animationPreviewObject"></div>
+                </div>
+              </section>
+
+              <section class="animationTimelinePanel">
+                <header>
+                  <strong>Timeline</strong>
+                  <input id="animationTimelineScrub" type="range" min="0" max="1000" step="1" value="0" />
+                  <button id="animationPrevKeyBtn" type="button" title="Keyframe anterior">◀◆</button>
+                  <button id="animationTimelinePlayBtn" type="button" title="Reproducir preview">▶</button>
+                  <button id="animationTimelineStopBtn" type="button" title="Detener preview">■</button>
+                  <button id="animationNextKeyBtn" type="button" title="Keyframe siguiente">◆▶</button>
+                </header>
+                <div id="animationTimeline" class="animationTimeline">
+                  <div class="timelineRuler" id="animationTimelineRuler"></div>
+                  <div id="animationScrubLane" class="animationScrubLane" title="Arrastra aquí para hacer scrub"><div class="animationScrubRail"></div></div>
+                  <div class="timelineTrack" data-prop="x"><span>X</span><div class="timelineRail"></div></div>
+                  <div class="timelineTrack" data-prop="y"><span>Y</span><div class="timelineRail"></div></div>
+                  <div class="timelineTrack" data-prop="rotation"><span>Rot</span><div class="timelineRail"></div></div>
+                  <div class="timelineTrack" data-prop="scale"><span>Scale</span><div class="timelineRail"></div></div>
+                  <div id="animationPlayhead" class="animationPlayhead"></div>
+                </div>
+                <p class="hint">Doble clic en una pista para añadir keyframe. Arrastra diamantes para moverlos en el tiempo.</p>
+              </section>
+            </div>
+
+            <h2>Keyframes / ajuste fino</h2>
+            <div class="keyEditor grid6">
+              <label>Tiempo <input id="transformKeyTime" type="number" min="0" step="50" /></label>
+              <label>X <input id="transformKeyX" type="number" step="1" /></label>
+              <label>Y <input id="transformKeyY" type="number" step="1" /></label>
+              <label>Rotación <input id="transformKeyRotation" type="number" step="1" /></label>
+              <label>Escala <input id="transformKeyScale" type="number" step="0.05" /></label>
+              <label>Easing
+                <select id="transformKeyEasing">
+                  <option value="linear">Linear</option>
+                  <option value="smooth">Smooth</option>
+                  <option value="bezier">Bezier suave</option>
+                  <option value="easeIn">Ease in</option>
+                  <option value="easeOut">Ease out</option>
+                  <option value="easeInOut">Ease in-out</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="row">
+              <button id="addTransformKeyBtn" type="button">Añadir key canal</button>
+              <button id="insertFullTransformKeyBtn" type="button">Insertar transform completo</button>
+              <button id="captureTransformKeyBtn" type="button">Capturar transform actual</button>
+              <button id="deleteTransformKeyBtn" type="button" class="danger">Eliminar key</button>
+            </div>
+
+            <table class="keyframeTable">
+              <thead>
+                <tr><th>t</th><th>canal</th><th colspan="3">valor</th><th>easing</th></tr>
+              </thead>
+              <tbody id="transformKeyframeList"></tbody>
+            </table>
+            </div>
+
+            <div id="pathAnimPanel" class="animationTabPanel">
+              <h2>Path animation</h2>
+              <div class="pathControls grid3">
+                <label class="check"><input id="pathEnabled" type="checkbox" /> Activar path</label>
+                <label class="check"><input id="pathOrient" type="checkbox" /> Orientar al path</label>
+                <label class="check"><input id="pathClosed" type="checkbox" /> Path cerrado</label>
+              </div>
+
+              <div class="grid3">
+                <label>Offset rotación <input id="pathRotationOffset" type="number" step="1" /></label>
+                <label>Progreso % <input id="pathProgressValue" type="number" min="0" max="100" step="1" /></label>
+                <label>Duración ciclo ms <input id="pathCycleDuration" type="number" min="1" step="100" /></label>
+                <label>Easing progreso
+                  <select id="pathProgressEasing">
+                    <option value="linear">Linear</option>
+                    <option value="smooth">Smooth</option>
+                    <option value="bezier">Bezier suave</option>
+                    <option value="easeIn">Ease in</option>
+                    <option value="easeOut">Ease out</option>
+                    <option value="easeInOut">Ease in-out</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="row pathButtonRow">
+                <button id="addPathPointBtn" type="button">Añadir punto</button>
+                <button id="deletePathPointBtn" type="button" class="danger">Eliminar punto</button>
+                <button id="reversePathBtn" type="button">Invertir path</button>
+                <button id="addPathProgressKeyBtn" type="button">Añadir key progreso</button>
+                <button id="deletePathProgressKeyBtn" type="button" class="danger">Eliminar key progreso</button>
+              </div>
+
+              <div class="pathDrawToolbar">
+                <button id="pathEditPointsBtn" type="button" class="active">Puntos</button>
+                <button id="pathPencilModeBtn" type="button">Lápiz</button>
+                <label>Tolerancia <input id="pathSimplifyTolerance" type="number" min="1" max="80" step="1" value="10" /></label>
+                <label>Máx. puntos <input id="pathMaxDrawPoints" type="number" min="4" max="300" step="1" value="80" /></label>
+              </div>
+
+              <p class="hint">Modo Puntos: clic para añadir puntos y arrastra un punto para moverlo. Modo Lápiz: dibuja un trazo; se simplificará automáticamente para no crear demasiados puntos.</p>
+
+              <div class="pathSceneCanvasPanel">
+                <header>
+                  <strong>Referencia de escena</strong>
+                  <span id="pathCanvasStatus" class="hint">Coordenadas reales de escena</span>
+                </header>
+                <div id="pathSceneCanvas" class="pathSceneCanvas" title="Clic para añadir punto. Arrastra un punto para moverlo."></div>
+              </div>
+
+              <div class="pathLists">
+                <details class="pathPointDetails">
+                  <summary>Puntos del path <span class="hint">(consulta)</span></summary>
+                  <ul id="pathPointList" class="list compactList"></ul>
+                </details>
+                <section>
+                  <h3>Keys de progreso</h3>
+                  <table class="keyframeTable">
+                    <thead>
+                      <tr><th>t</th><th>progreso</th><th>easing</th></tr>
+                    </thead>
+                    <tbody id="pathProgressKeyList"></tbody>
+                  </table>
+                </section>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <div id="mechanismEditor" class="mechanismEditor hidden">
+        <header>
+          <strong>Editor de mecanismos</strong>
+          <button id="newMechanismBtn">+ Mecanismo</button>
+          <button id="deleteMechanismBtn">Eliminar</button>
+          <button id="testMechanismBtn">Probar</button>
+          <button id="addMechanismElementBtn">+ Elemento</button>
+          <button id="deleteMechanismElementBtn">Eliminar elemento</button>
+          <button id="addMechanismRuleBtn">+ Regla</button>
+        </header>
+
+        <div class="mechanismLayout">
+          <aside class="mechanismListPanel">
+            <h2>Mecanismos</h2>
+            <ul id="mechanismList" class="list"></ul>
+          </aside>
+
+          <section class="mechanismInspector">
+            <h2>Mecanismo</h2>
+            <label>Nombre <input id="mechanismName" type="text" /></label>
+            <label>Tipo base
+              <select id="mechanismType">
+                <option value="generic">Genérico</option>
+                <option value="stateMachine">Estados / palancas</option>
+                <option value="connection">Conexiones / tubos</option>
+                <option value="sequence">Secuencia / sonido</option>
+                <option value="slots">Slots / colocar piezas</option>
+              </select>
+            </label>
+            <label>Mensaje al resolver
+              <textarea id="mechanismSolvedMessage" rows="2">Mecanismo resuelto.</textarea>
+            </label>
+            <label>Objeto que desbloquea al resolver
+              <select id="mechanismUnlockObject"></select>
+            </label>
+            <label class="check"><input id="mechanismCloseOnSolved" type="checkbox" /> Cerrar al resolver</label>
+
+            <h3>Elemento seleccionado</h3>
+            <label>Nombre <input id="mechanismElementName" type="text" /></label>
+            <label>Tipo
+              <select id="mechanismElementType">
+                <option value="state">Estado</option>
+                <option value="position">Posición / rotación</option>
+                <option value="connection">Conexión</option>
+                <option value="sequence">Secuencia</option>
+                <option value="slot">Slot</option>
+              </select>
+            </label>
+            <div class="grid2">
+              <label>Valor <input id="mechanismElementValue" type="number" /></label>
+              <label>Estados <input id="mechanismElementStates" type="number" min="1" /></label>
+              <label>X <input id="mechanismElementX" type="number" /></label>
+              <label>Y <input id="mechanismElementY" type="number" /></label>
+            </div>
+            <label>Tags / acepta
+              <input id="mechanismElementTags" type="text" placeholder="llave,tubo,engranaje" />
+            </label>
+            <label>Imagen del elemento
+              <select id="mechanismElementImage"></select>
+            </label>
+
+            <h3>Reglas JSON</h3>
+            <textarea id="mechanismRulesJson" rows="10" spellcheck="false"></textarea>
+          </section>
+
+          <section class="mechanismCanvasPanel">
+            <h2>Canvas del mecanismo</h2>
+            <div id="mechanismCanvas" class="mechanismCanvas"></div>
+          </section>
+        </div>
+      </div>
+
+    </main>
+
+    <aside class="sidebar right" id="rightSidebar">
+      <section class="panel">
+        <h2>Propiedades</h2>
+        <div id="sceneProps" class="props hidden">
+          <h2>Propiedades de escena</h2>
+          <label>Nombre escena <input id="scenePropName" type="text" /></label>
+          <div class="startSceneBox">
+            <p id="currentStartSceneInfo" class="hint"></p>
+            <button id="markStartSceneBtn" type="button">★ Marcar esta escena como inicial</button>
+          </div>
+          <label>Parallax global de esta escena
+            <input id="sceneParallaxStrength" type="number" step="0.1" min="0" max="10" value="1" />
+          </label>
+          <label class="check"><input id="sceneCameraEnabled" type="checkbox" /> Cámara sigue al Player en Play</label>
+          <p class="hint">0 = sin parallax. 1 = sutil. 10 = muy acusado. Los objetos usan capas virtuales -1, 0 o +1.</p>
+
+
+          
+          <div class="props pathfindingSceneBlock">
+            <h3>Pathfinding / navegación</h3>
+            <label class="check"><input id="scenePathfindingEnabled" type="checkbox" /> Activar pathfinding A*</label>
+            <div class="grid2">
+              <label>Tamaño grid <input id="scenePathfindingGridSize" type="number" min="8" max="96" step="4" value="32" /></label>
+              <label>Margen obstáculos <input id="scenePathfindingPadding" type="number" min="0" max="96" step="2" value="14" /></label>
+            </div>
+            <div class="grid2">
+              <label class="check"><input id="scenePathfindingDiagonal" type="checkbox" /> Permitir diagonales</label>
+              <label class="check"><input id="scenePathfindingDebug" type="checkbox" /> Ver ruta debug en Play</label>
+            </div>
+            <p class="hint">El player evita objetos marcados como obstáculo. Se usan zonas navegables si existen.</p>
+          </div>
+
+
+          <div class="props physicsSceneBlock">
+            <h3>Físicas de escena</h3>
+            <label class="check"><input id="scenePhysicsEnabled" type="checkbox" /> Activar físicas en esta escena</label>
+            <label>Dominio físico
+              <select id="scenePhysicsDomainObjectId"></select>
+            </label>
+            <div class="grid2">
+              <label>Gravedad X <input id="scenePhysicsGravityX" type="number" step="10" value="0" /></label>
+              <label>Gravedad Y <input id="scenePhysicsGravityY" type="number" step="10" value="900" /></label>
+              <label>Velocidad simulación <input id="scenePhysicsTimeScale" type="number" step="0.05" min="0" max="3" value="1" /></label>
+              <label class="check"><input id="scenePhysicsBounds" type="checkbox" /> Límites del escenario</label>
+            </div>
+            <div class="grid2">
+              <label class="check"><input id="scenePhysicsResetOnEnter" type="checkbox" /> Resetear al entrar</label>
+              <label class="check"><input id="scenePhysicsDebug" type="checkbox" /> Mostrar cuerpos</label>
+            </div>
+            <button id="scenePhysicsResetBtn" type="button">Resetear escena física</button>
+            <p class="hint">Matter.js se usa solo en escenas con físicas activadas.</p>
+          </div>
+
+          <h3>Audio de escena</h3>
+          <div class="grid2">
+            <label>Volumen global escena
+              <input id="sceneAudioMasterVolume" type="range" min="0" max="1" step="0.01" value="1" />
+            </label>
+            <label class="check"><input id="sceneAudioAutoplay" type="checkbox" /> Reproducir al entrar</label>
+          </div>
+          <div class="grid2">
+            <label>Añadir audio
+              <select id="sceneAudioAddSelect"></select>
+            </label>
+            <button id="sceneAudioAddBtn" type="button">Añadir seleccionado</button>
+            <button id="sceneAudioImportBtn" type="button">Importar audio</button>
+          </div>
+          <p id="sceneAudioAssetCount" class="hint"></p>
+          <ul id="sceneAudioList" class="audioList"></ul>
+          <p class="hint">Estos audios pertenecen a la escena y pueden reproducirse o detenerse con nodos de audio.</p>
+
+        </div>
+
+        <div id="emptyProps" class="muted">Selecciona un objeto, zona, nodo o escena.</div>
+
+        <div id="props" class="props hidden">
+          <label>Nombre <input id="propName" type="text" /></label>
+          <label>Tipo
+            <select id="propType">
+              <option value="background">Fondo</option>
+              <option value="player">Player</option>
+              <option value="prop">Objeto decorativo</option>
+              <option value="item">Objeto recogible</option>
+              <option value="hotspot">Hotspot</option>
+              <option value="character">Personaje</option>
+              <option value="door">Cambio de escena</option>
+            </select>
+          </label>
+
+          <div class="grid2">
+            <label>X <input id="propX" type="number" /></label>
+            <label>Y <input id="propY" type="number" /></label>
+            <label>Ancho <input id="propW" type="number" /></label>
+            <label>Alto <input id="propH" type="number" /></label>
+            <label>Escala <input id="propScale" type="number" step="0.05" /></label>
+            <label>Rotación <input id="propRotation" type="number" /></label>
+            <label>Z <input id="propZ" type="number" /></label>
+            <label>Velocidad <input id="propSpeed" type="number" /></label>
+          </div>
+
+          <label>Imagen
+            <select id="propImage"></select>
+          </label>
+          <p id="propImageListInfo" class="hint"></p>
+          <button id="loadImageForObjectBtn">Cargar imagen para este objeto</button>
+          <input id="objectImageInput" class="hiddenFileInput" type="file" accept="image/*" />
+
+          <div id="spriteProps">
+            <h3>Spritesheet / Animación</h3>
+            <label class="check"><input id="propSpriteEnabled" type="checkbox" /> Usar como spritesheet</label>
+            <label>Imagen spritesheet
+              <select id="propSpriteImage"></select>
+            </label>
+            <p id="propSpriteImageInfo" class="hint"></p>
+            <label class="check"><input id="propAutoFlipX" type="checkbox" /> Auto flip X según dirección</label>
+            <div class="grid2">
+              <label>Ancho frame <input id="propFrameW" type="number" /></label>
+              <label>Alto frame <input id="propFrameH" type="number" /></label>
+              <label>Columnas <input id="propSpriteCols" type="number" /></label>
+              <label>Filas <input id="propSpriteRows" type="number" /></label>
+              <label>FPS <input id="propSpriteFps" type="number" /></label>
+              <label>Frame actual <input id="propSpriteFrame" type="number" /></label>
+            </div>
+            <div class="spriteAutoFrameActions">
+              <button id="spriteAutoFrameBtn" type="button" class="primarySpriteFrameBtn">Ajustar frame</button>
+              <button id="spriteFitObjectToFrameBtn" type="button" class="secondarySpriteFrameBtn">Aplicar tamaño manual al objeto</button>
+              <p id="spriteAutoFrameStatus" class="hint"></p>
+            </div>
+            <label>Clip activo
+              <select id="propSpriteClip"></select>
+            </label>
+            <div class="grid2">
+              <label>Animación al moverse
+                <select id="propMoveClip"></select>
+              </label>
+              <label>Animación al parar
+                <select id="propStopClip"></select>
+              </label>
+
+            </div>
+            <div id="spriteClipVisualEditor" class="clipEditor">
+              <h4>Editor visual de clips</h4>
+              <label>Clip
+                <select id="clipEditSelect"></select>
+              </label>
+              <div class="grid2">
+                <label>Nombre <input id="clipEditName" type="text" placeholder="run" /></label>
+                <label>Modo
+                  <select id="clipEditMode">
+                    <option value="loop">Loop</option>
+                    <option value="once">Una vez</option>
+                    <option value="pingpong">Ping-pong</option>
+                  </select>
+                </label>
+                <label>Desde frame <input id="clipEditFrom" type="number" min="0" /></label>
+                <label>Hasta frame <input id="clipEditTo" type="number" min="0" /></label>
+                <label>FPS <input id="clipEditFps" type="number" min="1" /></label>
+              </div>
+              <div class="grid2">
+                <button id="clipApplyBtn" type="button">Guardar clip</button>
+                <button id="clipNewClipBtn" type="button">Crear clip</button>
+                <button id="clipDeleteBtn" type="button">Eliminar clip</button>
+                <button id="clipFormatJsonBtn" type="button">Formatear JSON</button>
+                <button id="clipFitGridBtn" type="button">Ajustar columnas al clip</button>
+              </div>
+              <p id="clipEditorStatus" class="hint"></p>
+            </div>
+
+            <details class="clipJsonDetails">
+              <summary>Avanzado: Clips JSON</summary>
+              <label>Clips JSON
+                <textarea id="propSpriteClips" rows="5" spellcheck="false"></textarea>
+              </label>
+              <p class="hint">El editor visual genera este JSON automáticamente. Las claves y cadenas deben ir entre comillas dobles.</p>
+            </details>
+          </div>
+
+          <label>Audio asociado
+            <select id="propAudio"></select>
+          </label>
+          <button id="loadAudioForObjectBtn">Cargar audio para este objeto</button>
+          <input id="objectAudioInput" class="hiddenFileInput" type="file" accept="audio/*" />
+
+          <div class="props">
+            <h3>Capa de parallax</h3>
+            <label>Capa virtual
+              <select id="propParallaxLayer">
+                <option value="-1">-1 Fondo lejano</option>
+                <option value="0">0 Plano de juego</option>
+                <option value="1">+1 Primer plano</option>
+              </select>
+            </label>
+            <p class="hint">La intensidad se calcula con el parallax global de la escena.</p>
+          </div>
+
+          <div id="backgroundProps">
+            <h3>Fondo</h3>
+            <label>Modo de ajuste
+              <select id="propBgResize">
+                <option value="cover">Cover / cubrir</option>
+                <option value="contain">Fit / encajar</option>
+                <option value="stretch">Stretch / estirar</option>
+                <option value="original">Original</option>
+                <option value="tile">Tile / mosaico</option>
+              </select>
+            </label>
+
+            <h3>Parallax</h3>
+            <label class="check"><input id="propParallaxEnabled" type="checkbox" /> Activar parallax</label>
+            <div class="grid2">
+              <label>Factor X <input id="propParallaxX" type="number" step="0.01" /></label>
+              <label>Factor Y <input id="propParallaxY" type="number" step="0.01" /></label>
+            </div>
+          </div>
+
+          <label class="check"><input id="propVisible" type="checkbox" /> Visible</label>
+          <label class="check"><input id="propLocked" type="checkbox" /> Bloqueado</label>
+          <p class="hint">En modo edición puedes arrastrar objetos. Usa los campos de posición, escala, rotación, ancho, alto y Z para guardar la transformación.</p>
+
+          
+          <div class="props pathfindingObjectBlock" id="pathfindingObjectBlock">
+            <h3>Pathfinding</h3>
+            <label class="check"><input id="propPathBlocker" type="checkbox" /> Este objeto bloquea el paso del player</label>
+            <p class="hint">Si está activo, el A* rodea este objeto aunque no esté usando Matter.js.</p>
+          </div>
+
+          <div class="props colliderPropsBlock" id="colliderPropsBlock">
+            <h3>Collider</h3>
+            <label class="check"><input id="propColliderEnabled" type="checkbox" /> Activar collider</label>
+            <label>Tipo / preset
+              <select id="propColliderType">
+                <option value="box">Caja</option>
+                <option value="ellipse">Óvalo / círculo</option>
+                <option value="triangle">Triángulo</option>
+                <option value="quad">Cuadrangular</option>
+                <option value="polygon">Polígono cerrado</option>
+              </select>
+            </label>
+            <div class="grid2">
+              <button id="editColliderBtn" type="button">Editar collider</button>
+              <button id="resetColliderBtn" type="button">Reset sprite</button>
+            </div>
+            <label class="check"><input id="propShowCollider" type="checkbox" /> Mostrar collider en escena</label>
+            <p class="hint">El collider se guarda en coordenadas locales del objeto y se mueve/escala con él.</p>
+          </div>
+
+
+          <div class="props physicsPropsBlock" id="physicsPropsBlock">
+            <h3>Física Matter.js del objeto</h3>
+            <p class="hint" id="propPhysicsObjectInfo"></p>
+            <label class="check"><input id="propPhysicsEnabled" type="checkbox" /> Este objeto participa en Matter.js</label>
+            <div class="grid2">
+              <label>Tipo físico
+                <select id="propPhysicsBodyType">
+                  <option value="dynamic">Dinámico</option>
+                  <option value="static">Estático</option>
+                  <option value="sensor">Sensor</option>
+                </select>
+              </label>
+              <label>Forma
+                <select id="propPhysicsShape">
+                  <option value="box">Caja</option>
+                  <option value="circle">Círculo</option>
+                  <option value="collider">Collider actual</option>
+                </select>
+              </label>
+              <label>Masa <input id="propPhysicsMass" type="number" step="0.1" min="0.1" value="1" /></label>
+              <label>Densidad <input id="propPhysicsDensity" type="number" step="0.0005" min="0.0001" value="0.001" /></label>
+              <label>Fricción <input id="propPhysicsFriction" type="number" step="0.05" min="0" max="1" value="0.2" /></label>
+              <label>Rebote <input id="propPhysicsRestitution" type="number" step="0.05" min="0" max="1" value="0.1" /></label>
+            </div>
+            <div class="grid2">
+              <label class="check"><input id="propPhysicsLockRotation" type="checkbox" /> Bloquear rotación</label>
+              <label class="check"><input id="propPhysicsStartSleeping" type="checkbox" /> Iniciar quieto</label>
+            </div>
+            <div class="grid2">
+              <button id="propPhysicsResetObjectBtn" type="button">Reset físico</button>
+              <button id="propPhysicsSetStartBtn" type="button">Guardar posición inicial</button>
+            </div>
+            <p class="hint">Para colliders poligonales complejos usa el editor de collider actual. Esta primera versión los aproxima en Matter.js.</p>
+          </div>
+
+          <h3>Acciones rápidas</h3>
+          <label>Al hacer clic
+            <select id="propAction">
+              <option value="none">Nada</option>
+              <option value="message">Mostrar mensaje</option>
+              <option value="pickup">Recoger objeto</option>
+              <option value="goto">Ir a escena</option>
+              <option value="toggle">Mostrar/ocultar objeto</option>
+              <option value="playSound">Reproducir audio</option>
+              <option value="runGraph">Ejecutar grafo visual</option>
+            </select>
+          </label>
+
+          <label>Mensaje
+            <textarea id="propMessage" rows="3"></textarea>
+          </label>
+
+          <label>Escena destino
+            <select id="propTargetScene"></select>
+          </label>
+
+          <label>Objeto relacionado
+            <select id="propTargetObject"></select>
+          </label>
+
+          <h3>Estados / lógica</h3>
+          <label>Estado inicial
+            <select id="propInitialState">
+              <option value="default">default</option>
+              <option value="disabled">disabled</option>
+              <option value="hidden">hidden</option>
+              <option value="used">used</option>
+            </select>
+          </label>
+
+
+          <div class="props objectStatesBlock">
+            <h3>Estados del objeto</h3>
+            <p class="hint">Cada estado puede tener su propia imagen, visibilidad e interacción. Ejemplo: maceta intacta / rota, llave oculta / visible / recogida.</p>
+
+            <label>Estado al recoger
+              <select id="propCollectState"></select>
+            </label>
+
+            <label>Icono en inventario
+              <select id="propInventoryImage"></select>
+            </label>
+
+            <div class="grid2">
+              <label>Estado editado
+                <select id="propStateSelect"></select>
+              </label>
+              <button id="propStateAddBtn" type="button">+ Estado</button>
+              <button id="propStateDeleteBtn" type="button" class="danger">Eliminar estado</button>
+            </div>
+
+            <label>Nombre del estado
+              <input id="propStateName" type="text" placeholder="intacta, rota, visible..." />
+            </label>
+
+            <label>Imagen de este estado
+              <select id="propStateImage"></select>
+            </label>
+
+            <div class="grid2">
+              <label class="check"><input id="propStateVisible" type="checkbox" /> Visible en este estado</label>
+              <label class="check"><input id="propStateInteractable" type="checkbox" /> Interactuable en este estado</label>
+            </div>
+          </div>
+
+          <label>Requiere item
+            <select id="propRequiresItem"></select>
+          </label>
+
+          <label>Mensaje si falta requisito
+            <textarea id="propLockedMessage" rows="2"></textarea>
+          </label>
+
+          <h3>Proximidad</h3>
+          <label class="check"><input id="propRequireProximity" type="checkbox" /> Requiere que el player esté cerca</label>
+          <label>Distancia máxima de interacción
+            <input id="propInteractionDistance" type="number" min="0" step="10" />
+          </label>
+          <label>Mensaje si está demasiado lejos
+            <textarea id="propTooFarMessage" rows="2"></textarea>
+          </label>
+
+          <h3>Usar item sobre este objeto</h3>
+          <label class="check"><input id="propUseItemEnabled" type="checkbox" /> Activar interacción rápida de inventario</label>
+
+          <label>Item que debe usarse
+            <select id="propUseItemId"></select>
+          </label>
+
+          <label>Mensaje al usar correctamente
+            <textarea id="propUseItemMessage" rows="2"></textarea>
+          </label>
+
+          <div class="grid2">
+            <label>Estado del objeto
+              <input id="propUseItemSetState" type="text" placeholder="rota, abierta, usada..." />
+            </label>
+            <label class="check"><input id="propUseItemConsume" type="checkbox" /> Consumir item usado</label>
+          </div>
+
+          <label>Mostrar objeto
+            <select id="propUseItemRevealObject"></select>
+          </label>
+
+          <label>Ocultar objeto
+            <select id="propUseItemHideObject"></select>
+          </label>
+          <label class="check"><input id="propUseItemHideSelf" type="checkbox" /> Ocultar este objeto al usar el item</label>
+
+          <label>Ir a escena después
+            <select id="propUseItemGotoScene"></select>
+          </label>
+
+          <label>Mensaje si se usa un item incorrecto
+            <textarea id="propUseItemFailMessage" rows="2"></textarea>
+          </label>
+
+        </div>
+
+        <div id="zoneProps" class="props hidden">
+          <p id="zoneSceneInfo" class="hint"></p>
+          <label>Nombre zona <input id="zoneName" type="text" /></label>
+          <label class="check"><input id="zoneEnabled" type="checkbox" /> Navegable</label>
+          <div class="grid2">
+            <button id="addZonePointBtn">Añadir punto</button>
+            <button id="deleteZonePointBtn">Eliminar punto</button>
+          </div>
+          <p class="hint">
+            Selecciona la herramienta Zona navegable. Arrastra los puntos para editar.
+            Doble clic sobre una arista para añadir un punto. Supr elimina el punto seleccionado.
+          </p>
+          <button id="deleteZoneBtn" class="danger">Eliminar zona</button>
+        </div>
+
+        <div id="nodeProps" class="props hidden">
+          <label>Nombre nodo <input id="nodeName" type="text" /></label>
+          <label>Categoría
+            <select id="nodeCategory">
+              <option value="event">Evento</option>
+              <option value="entity">Entidad</option>
+              <option value="trigger">Trigger</option>
+              <option value="action">Acción</option>
+              <option value="condition">Condición</option>
+              <option value="data">Dato</option>
+              <option value="mechanism">Mecanismo</option>
+            </select>
+          </label>
+
+          <label>Tipo
+            <select id="nodeType"></select>
+          </label>
+          <label id="nodeEventWrap">Evento / trigger
+            <select id="nodeEvent">
+              <optgroup label="Mouse / interacción">
+                <option value="click">on click</option>
+                <option value="doubleClick">on double click</option>
+                <option value="hoverEnter">on hover enter</option>
+                <option value="hoverExit">on hover exit</option>
+                <option value="useItem">on use selected item</option>
+                <option value="examine">on examine / mirar</option>
+              </optgroup>
+              <optgroup label="Zona / colisión">
+                <option value="enter">on enter</option>
+                <option value="inside">while inside</option>
+                <option value="exit">on exit</option>
+              </optgroup>
+              <optgroup label="Escena">
+                <option value="sceneStart">on scene start</option>
+                <option value="sceneEnd">on scene end</option>
+              </optgroup>
+              <optgroup label="Inventario">
+                <option value="inventorySelect">on inventory select</option>
+                <option value="inventoryUse">on inventory use</option>
+                <option value="inventoryCombine">on inventory combine</option>
+              </optgroup>
+            </select>
+          </label>
+
+          <label id="nodeInputWrap">Tecla / botón / input
+            <input id="nodeInput" type="text" placeholder="ArrowLeft, Space, KeyE, mouse:left..." />
+          </label>
+
+          <label id="nodeObjectWrap">Objeto principal
+            <select id="nodeObject"></select>
+          </label>
+          <label id="nodeTargetObjectWrap">Objeto / item objetivo
+            <select id="nodeTargetObject"></select>
+          </label>
+          <label id="nodeAudioWrap">Audio
+            <select id="nodeAudio"></select>
+          </label>
+          <label id="nodeVolumeWrap">Volumen
+            <input id="nodeVolume" type="number" min="0" max="1" step="0.05" value="1" />
+          </label>
+
+          <label id="nodeAnimationWrap">Animación / clip
+            <select id="nodeAnimation"></select>
+          </label>
+          <label id="nodeAnimationModeWrap">Modo animación
+            <select id="nodeAnimationMode">
+              <option value="">Usar modo del clip</option>
+              <option value="once">Una vez</option>
+              <option value="loop">Loop</option>
+              <option value="pingpong">Ping-pong</option>
+            </select>
+          </label>
+          <label id="nodeValueWrap">Valor / texto / estado
+            <textarea id="nodeValue" rows="3"></textarea>
+          </label>
+          <label id="nodeValueSceneWrap" class="hiddenParam">Elegir escena
+            <select id="nodeValueSceneSelect"></select>
+          </label>
+
+          <label id="nodeSceneStartSceneWrap" class="hiddenParam">Escena de este inicio
+            <select id="nodeSceneStartScene"></select>
+          </label>
+          <p id="nodeSceneStartSceneHint" class="hint hiddenParam">Este nodo pertenece al grafo de esta escena. Puedes cambiar este selector para saltar al grafo de otra escena.</p>
+
+          <label id="nodePuzzleWrap">Mecanismo
+            <select id="nodePuzzle"></select>
+          </label>
+          <p id="nodeHelp" class="hint"></p>
+        </div>
+
+        <div id="propertiesDeleteActions" class="propsDeleteActions hidden">
+          <button id="deleteBtn" class="danger" type="button">Eliminar seleccionado</button>
+          <p class="hint">Elimina el objeto, zona, nodo o conexión seleccionados.</p>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Inventario Play</h2>
+        <div id="inventory"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Base de datos local</h2>
+        <p class="hint">IndexedDB guarda el proyecto completo en el navegador. JSON sirve para exportar/importar.</p>
+      </section>
+    </aside>
+  </div>
+
+  <div id="colliderEditorModal" class="colliderModal hidden" aria-hidden="true">
+    <div class="colliderWindow">
+      <header class="colliderHeader">
+        <strong id="colliderEditorTitle">Editar collider</strong>
+        <div class="colliderHeaderActions">
+          <button id="colliderApplyBtn" type="button">Aplicar</button>
+          <button id="colliderCancelBtn" type="button">Cancelar</button>
+          <button id="colliderCloseBtn" type="button">✕</button>
+        </div>
+      </header>
+
+      <div class="colliderBody">
+        <aside class="colliderTools">
+          <h3>Tipo</h3>
+          <button class="colliderPresetBtn" type="button" data-preset="box">Caja</button>
+          <button class="colliderPresetBtn" type="button" data-preset="ellipse">Óvalo</button>
+          <button class="colliderPresetBtn" type="button" data-preset="triangle">Triángulo</button>
+          <button class="colliderPresetBtn" type="button" data-preset="quad">Cuadrangular</button>
+          <button class="colliderPresetBtn" type="button" data-preset="polygon">Polígono</button>
+
+          <h3>Herramienta</h3>
+          <button id="colliderToolSelect" type="button">Seleccionar / mover punto</button>
+          <button id="colliderToolAdd" type="button">Añadir punto</button>
+          <button id="colliderToolMove" type="button">Mover forma</button>
+          <button id="colliderDeletePointBtn" type="button">Eliminar punto</button>
+
+          <h3>Acciones</h3>
+          <button id="colliderFitSpriteBtn" type="button">Ajustar al sprite</button>
+          <button id="colliderFitFeetBtn" type="button">Ajustar a pies</button>
+          <button id="colliderCenterBtn" type="button">Centrar</button>
+          <button id="colliderClosePolyBtn" type="button">Cerrar polígono</button>
+          <button id="colliderUndoPointBtn" type="button">Borrar último punto</button>
+
+          <h3>Vista</h3>
+          <label>Zoom
+            <input id="colliderZoom" type="range" min="0.5" max="4" step="0.1" value="1" />
+          </label>
+          <p id="colliderEditorHint" class="hint">Click: seleccionar. Arrastra puntos. En Añadir punto, click para crear; Enter cierra; Escape cancela; Backspace borra último.</p>
+        </aside>
+
+        <main class="colliderViewportWrap">
+          <div id="colliderViewport" class="colliderViewport">
+            <svg id="colliderEditorSvg"></svg>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <div id="footprintEditorModal" class="colliderModal footprintModal hidden" aria-hidden="true">
+    <div class="colliderWindow">
+      <header class="colliderHeader footprintHeader">
+        <strong id="footprintEditorTitle">Editar huella</strong>
+        <div class="colliderHeaderActions">
+          <button id="footprintApplyBtn" type="button">Aplicar</button>
+          <button id="footprintCancelBtn" type="button">Cancelar</button>
+          <button id="footprintCloseBtn" type="button">✕</button>
+        </div>
+      </header>
+
+      <div class="colliderBody">
+        <aside class="colliderTools">
+          <h3>Tipo de huella</h3>
+          <button class="footprintPresetBtn" type="button" data-preset="ellipse">Elipse</button>
+          <button class="footprintPresetBtn" type="button" data-preset="rect">Rectángulo</button>
+
+          <h3>Herramienta</h3>
+          <button id="footprintToolMove" type="button">Mover forma</button>
+          <button id="footprintToolResize" type="button">Redimensionar</button>
+
+          <h3>Acciones</h3>
+          <button id="footprintAutoBtn" type="button">Reset automático</button>
+          <button id="footprintFeetBtn" type="button">Ajustar a base/pies</button>
+          <button id="footprintUseColliderBtn" type="button">Usar collider como huella</button>
+          <button id="footprintGroundBtn" type="button">Usar proyección de suelo</button>
+
+          <h3>Vista</h3>
+          <label>Zoom
+            <input id="footprintZoom" type="range" min="0.5" max="4" step="0.1" value="1" />
+          </label>
+          <p id="footprintEditorHint" class="hint">La huella solo afecta al pathfinding del Player. No cambia clics, física ni interacción.</p>
+        </aside>
+
+        <main class="colliderViewportWrap">
+          <div id="footprintViewport" class="colliderViewport footprintViewport">
+            <svg id="footprintEditorSvg"></svg>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/matter-js@0.20.0/build/matter.min.js"></script>
+  <script src="js/00_core_state.js"></script>
+  <script src="js/01_project_model.js"></script>
+  <script src="js/02_scene_objects_assets.js"></script>
+  <script src="js/03_render_all_and_ui_lists.js"></script>
+  <script src="js/04_render_stage_and_collisions.js"></script>
+  <script src="js/05_properties_panel.js"></script>
+  <script src="js/06_navigation_runtime.js"></script>
+  <script src="js/07_nodes_graph.js"></script>
+  <script src="js/08_mechanisms.js"></script>
+  <script src="js/09_collider_editor.js"></script>
+  <script src="js/09_footprint_editor.js"></script>
+  <script src="js/09_sprite_autosize_hard_wire_fix.js"></script>
+  <script src="js/09_transform_animations.js"></script>
+  <script src="js/09_undo_redo.js"></script>
+  <script src="js/09_physics_editor.js"></script>
+  <script src="js/10_bindings_main.js"></script>
+</body>
+</html>

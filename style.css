@@ -1,0 +1,4567 @@
+:root {
+  --bg: #171717;
+  --panel: #222;
+  --panel2: #2b2b2b;
+  --line: #3c3c3c;
+  --text: #ededed;
+  --muted: #aaa;
+  --accent: #d7b36a;
+  --danger: #9c4545;
+  --ok: #6a9d79;
+  --blue: #6a8fd7;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+}
+
+#app {
+  height: 100vh;
+  display: grid;
+  grid-template-columns: 300px 1fr 360px;
+}
+
+.sidebar {
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+  overflow-y: auto;
+  padding: 14px;
+}
+
+.sidebar.right {
+  border-right: 0;
+  border-left: 1px solid var(--line);
+}
+
+h1 {
+  margin: 0 0 14px;
+  font-size: 20px;
+  color: var(--accent);
+}
+
+h2 {
+  font-size: 14px;
+  margin: 0 0 10px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--muted);
+}
+
+h3 {
+  font-size: 13px;
+  color: var(--accent);
+  margin: 14px 0 8px;
+}
+
+.panel {
+  background: var(--panel2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+button, .fileButton {
+  border: 1px solid var(--line);
+  background: #333;
+  color: var(--text);
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-block;
+  font-size: 13px;
+  margin: 2px 0;
+}
+
+button:hover, .fileButton:hover { border-color: var(--accent); }
+button.active { background: var(--accent); color: #111; }
+button.danger { background: var(--danger); }
+
+input, select, textarea {
+  width: 100%;
+  background: #171717;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 7px;
+  margin-top: 4px;
+}
+
+textarea { resize: vertical; }
+
+label {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin: 8px 0;
+}
+
+.fileButton input { display: none; }
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px;
+}
+
+.list {
+  padding: 0;
+  margin: 8px 0 0;
+  list-style: none;
+}
+
+.list li {
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.list li:hover,
+.list li.selected {
+  border-color: var(--accent);
+  background: #34302a;
+}
+
+.assetGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.asset {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #111;
+  min-height: 62px;
+  display: grid;
+  place-items: center;
+  cursor: grab;
+  overflow: hidden;
+  font-size: 11px;
+  text-align: center;
+}
+
+.asset img {
+  max-width: 100%;
+  max-height: 70px;
+  pointer-events: none;
+}
+
+.audioList {
+  display: grid;
+  gap: 6px;
+}
+
+.audioAsset {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 7px;
+  background: #111;
+  font-size: 12px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.workspace {
+  display: grid;
+  grid-template-rows: 48px 1fr;
+  min-width: 0;
+  position: relative;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+  background: #1e1e1e;
+}
+
+#statusText {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+#stageWrap {
+  overflow: auto;
+  display: grid;
+  place-items: center;
+  background:
+    linear-gradient(45deg, #1a1a1a 25%, transparent 25%),
+    linear-gradient(-45deg, #1a1a1a 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #1a1a1a 75%),
+    linear-gradient(-45deg, transparent 75%, #1a1a1a 75%);
+  background-size: 24px 24px;
+  background-position: 0 0, 0 12px, 12px -12px, -12px 0;
+}
+
+#stage {
+  position: relative;
+  width: 1280px;
+  height: 720px;
+  background: #101010;
+  border: 1px solid #555;
+  box-shadow: 0 16px 50px rgba(0,0,0,.5);
+  overflow: hidden;
+}
+
+#navLayer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.nav-editing #navLayer,
+.editor #navLayer {
+  pointer-events: auto;
+}
+
+.sceneObject {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 120px;
+  height: 120px;
+  transform-origin: center center;
+  border: 1px dashed transparent;
+  cursor: move;
+  user-select: none;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.sceneObject.background {
+  background-size: cover;
+  background-position: center;
+  border-color: rgba(106,143,215,.45);
+}
+
+.sceneObject.hotspot {
+  background: rgba(215,179,106,.16);
+  border: 1px dashed rgba(215,179,106,.85);
+}
+
+.sceneObject.player {
+  border-color: rgba(106,157,121,.9);
+}
+
+.sceneObject.selected {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.sceneObject.locked {
+  cursor: not-allowed;
+  opacity: .72;
+}
+
+.sceneObject .label {
+  position: absolute;
+  left: 0;
+  top: -20px;
+  background: rgba(0,0,0,.65);
+  color: white;
+  font-size: 11px;
+  padding: 2px 5px;
+  border-radius: 4px;
+}
+
+.play .sceneObject {
+  outline: none !important;
+  border-color: transparent;
+  cursor: pointer;
+}
+
+.play .sceneObject.hotspot {
+  background: transparent;
+  border-color: transparent;
+}
+
+.props.hidden,
+.hidden { display: none !important; }
+
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.check input {
+  width: auto;
+  margin: 0;
+}
+
+.muted, .hint {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+#messageBox {
+  position: absolute;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  min-width: 280px;
+  max-width: 700px;
+  padding: 16px 20px;
+  background: rgba(15,15,15,.88);
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  color: white;
+  font-size: 18px;
+  line-height: 1.35;
+  display: none;
+  z-index: 9999;
+}
+
+#inventory {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.inventoryItem {
+  border: 1px solid var(--line);
+  background: #111;
+  border-radius: 8px;
+  padding: 6px;
+  min-width: 52px;
+  min-height: 52px;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+}
+
+.inventoryItem img {
+  max-width: 44px;
+  max-height: 44px;
+}
+
+.logicEditor {
+  position: absolute;
+  inset: 48px 0 0 0;
+  background: #1d1d1d;
+  z-index: 5000;
+  display: grid;
+  grid-template-rows: 44px 1fr;
+}
+
+.logicEditor > header {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 12px;
+  background: #262626;
+  border-bottom: 1px solid var(--line);
+}
+
+.logicEditor > header strong {
+  color: var(--accent);
+  margin-right: auto;
+}
+
+.logicBody {
+  position: relative;
+  overflow: auto;
+  background-image: radial-gradient(#333 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+#wireLayer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 2400px;
+  height: 1400px;
+  pointer-events: auto;
+}
+
+#nodeCanvas {
+  position: relative;
+  width: 2400px;
+  height: 1400px;
+}
+
+.logicNode {
+  position: absolute;
+  width: 230px;
+  min-height: 112px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #2b2b2b;
+  box-shadow: 0 8px 24px rgba(0,0,0,.25);
+  cursor: grab;
+  overflow: visible;
+  z-index: 5;
+}
+
+.logicNode.selected {
+  border-color: var(--accent);
+  outline: 1px solid var(--accent);
+}
+
+.logicNode .nodeHeader {
+  padding: 8px;
+  background: #363636;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+  border-radius: 10px 10px 0 0;
+}
+
+.logicNode .content {
+  padding: 8px;
+  font-size: 12px;
+  color: var(--muted);
+  min-height: 52px;
+}
+
+.port {
+  position: absolute;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  border: 2px solid #111;
+  cursor: crosshair;
+}
+
+.port.input {
+  left: -9px;
+  top: 58px;
+  background: var(--blue);
+}
+
+.port.output {
+  right: -9px;
+  top: 58px;
+  background: var(--accent);
+}
+
+.tempWire {
+  stroke-dasharray: 6 4;
+}
+
+.selectedWire {
+  stroke: #fff !important;
+  stroke-width: 4 !important;
+}
+
+
+.hiddenFileInput {
+  position: fixed;
+  left: -9999px;
+  top: -9999px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sceneObject.dragging,
+.logicNode.dragging {
+  opacity: .88;
+  cursor: grabbing;
+}
+
+#wireLayer {
+  z-index: 1;
+}
+
+#nodeCanvas {
+  z-index: 2;
+}
+
+.logicNode {
+  touch-action: none;
+}
+
+.sceneObject {
+  touch-action: none;
+}
+
+.asset.selected {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent);
+}
+
+.assetActions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.sceneObject,
+.logicNode {
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.sceneObject * {
+  pointer-events: none;
+}
+
+
+.play #navLayer {
+  display: none !important;
+}
+
+.editor .sceneObject {
+  cursor: grab;
+}
+
+.editor .sceneObject.dragging {
+  cursor: grabbing;
+}
+
+.sceneObject.selected::after {
+  content: "arrastrar";
+  position: absolute;
+  right: 0;
+  bottom: -22px;
+  background: rgba(0,0,0,.7);
+  color: #fff;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  pointer-events: none;
+}
+
+.sceneObject.background.selected::after {
+  content: "fondo";
+}
+
+
+/* v7: la capa de navegación no debe bloquear el ratón salvo al editar zonas */
+#navLayer {
+  pointer-events: none !important;
+  z-index: 900;
+}
+
+.nav-editing #navLayer {
+  pointer-events: auto !important;
+}
+
+.sceneObject {
+  z-index: 100;
+}
+
+.sceneObject.background {
+  z-index: 1 !important;
+  left: 0;
+  top: 0;
+}
+
+.sceneObject.background.bg-cover {
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center center;
+}
+
+.sceneObject.background.bg-contain {
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center center;
+}
+
+.sceneObject.background.bg-stretch {
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: center center;
+}
+
+.sceneObject.background.bg-original {
+  background-size: auto;
+  background-repeat: no-repeat;
+  background-position: center center;
+}
+
+.sceneObject.background.bg-tile {
+  background-size: auto;
+  background-repeat: repeat;
+  background-position: 0 0;
+}
+
+.editor .sceneObject.background {
+  cursor: default;
+}
+
+.editor .sceneObject.background.selected {
+  cursor: grab;
+}
+
+.editor .sceneObject.background:not([style*="background-image"]) {
+  background: linear-gradient(135deg, rgba(106,143,215,.22), rgba(106,143,215,.06));
+}
+
+
+/* v8: el fondo es visual, no interactivo en la escena */
+.sceneObject.background {
+  pointer-events: none !important;
+}
+
+.sceneObject.background .label,
+.sceneObject.background::after {
+  display: none !important;
+}
+
+
+.logicNode.event { border-color: #c98b5c; }
+.logicNode.entity { border-color: #6a8fd7; }
+.logicNode.action { border-color: #6a9d79; }
+.logicNode.condition { border-color: #c9b85c; }
+.logicNode.trigger { border-color: #b46ad7; }
+
+.logicNode .nodeHeader small {
+  color: var(--muted);
+  float: right;
+}
+
+#newNodeType {
+  max-width: 260px;
+}
+
+
+.logicNode .port {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  color: #111;
+  font-weight: 700;
+}
+
+.logicNode .port.flowOut { background: var(--accent); }
+.logicNode .port.flowIn { background: var(--blue); }
+.logicNode .port.dataOut { background: #7fc7a2; }
+.logicNode .port.dataIn { background: #c7a27f; }
+
+.logicNode .port[data-port="then"] { top: 44px; }
+.logicNode .port[data-port="true"] { top: 44px; }
+.logicNode .port[data-port="false"] { top: 74px; }
+.logicNode .port[data-port="item"] { top: 74px; }
+.logicNode .port[data-port="target"] { top: 98px; }
+.logicNode .port[data-port="object"] { top: 74px; }
+
+.logicNode {
+  min-height: 132px;
+}
+
+.logicNode .content {
+  min-height: 72px;
+}
+
+.linkLabel {
+  font-size: 10px;
+  fill: #ddd;
+  pointer-events: none;
+}
+
+
+.gameInventory {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  min-height: 58px;
+  max-width: 80%;
+  display: none;
+  gap: 8px;
+  padding: 8px;
+  background: rgba(0,0,0,.58);
+  border: 1px solid rgba(215,179,106,.65);
+  border-radius: 12px;
+  z-index: 10000;
+  pointer-events: auto;
+}
+
+.play .gameInventory {
+  display: flex;
+}
+
+.gameInvItem {
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(20,20,20,.85);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  font-size: 10px;
+  overflow: hidden;
+}
+
+.gameInvItem.selected {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent);
+}
+
+.gameInvItem img {
+  max-width: 42px;
+  max-height: 42px;
+  pointer-events: none;
+}
+
+.logicNode .content .eventLine {
+  color: #d7b36a;
+}
+
+
+.nodeInvalid {
+  border-color: #d76565 !important;
+}
+
+.logicNode .content .paramsLine {
+  color: #aaa;
+  font-size: 11px;
+}
+
+.logicNode .content .missing {
+  color: #ff8585;
+}
+
+#newNodeCategory,
+#newNodeType {
+  max-width: 180px;
+}
+
+#nodeProps label.hiddenParam {
+  display: none !important;
+}
+
+.sceneObject.spriteSheet{background-size:auto!important;background-repeat:no-repeat!important;image-rendering:auto}
+#spriteProps textarea{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11px}
+
+.logicNode.animation { border-color: #d76ab0; }
+
+.logicNode.input { border-color: #6ad7d0; }
+
+.gameInventory { align-items: center; }
+.inventoryToggle{width:52px;height:52px;border:1px solid rgba(215,179,106,.8);border-radius:12px;background:rgba(20,20,20,.9);display:grid;place-items:center;cursor:pointer;flex:0 0 auto;overflow:hidden}
+.inventoryToggle img{max-width:46px;max-height:46px;pointer-events:none}
+.inventoryToggle.placeholder{color:var(--accent);font-size:22px}
+.inventorySlots{display:none;gap:8px}
+.gameInventory.open .inventorySlots{display:flex}
+.gameInvSlot{width:48px;height:48px;border:1px dashed rgba(255,255,255,.24);border-radius:8px;background:rgba(20,20,20,.65);display:grid;place-items:center;overflow:hidden}
+
+.sceneObject {
+  will-change: transform, background-position;
+  backface-visibility: hidden;
+}
+
+.navPoint {
+  cursor: move;
+  pointer-events: auto;
+}
+
+.navEdge {
+  cursor: copy;
+  pointer-events: auto;
+}
+
+.navPolygon {
+  cursor: move;
+  pointer-events: auto;
+}
+
+.navPoint.selected {
+  stroke: #fff;
+  stroke-width: 3;
+}
+
+.gameInvItem {
+  -webkit-user-drag: element;
+}
+
+.editor .sceneObject {
+  resize: none;
+}
+
+.inventoryToggle {
+  width: var(--inv-icon-w, 52px);
+  height: var(--inv-icon-h, 52px);
+}
+
+.inventoryToggle img {
+  max-width: calc(var(--inv-icon-w, 52px) - 6px);
+  max-height: calc(var(--inv-icon-h, 52px) - 6px);
+}
+
+.prefabBadge {
+  color: var(--accent);
+  font-size: 10px;
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  padding: 1px 4px;
+}
+
+.mechanismEditor {
+  position: absolute;
+  inset: 48px 0 0 0;
+  background: #1d1d1d;
+  z-index: 5000;
+  display: grid;
+  grid-template-rows: 44px 1fr;
+}
+
+.mechanismEditor > header {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 12px;
+  background: #262626;
+  border-bottom: 1px solid var(--line);
+}
+
+.mechanismEditor > header strong {
+  color: var(--accent);
+  margin-right: auto;
+}
+
+.mechanismLayout {
+  display: grid;
+  grid-template-columns: 240px 360px 1fr;
+  min-height: 0;
+}
+
+.mechanismListPanel,
+.mechanismInspector,
+.mechanismCanvasPanel {
+  padding: 12px;
+  border-right: 1px solid var(--line);
+  overflow: auto;
+}
+
+.mechanismCanvas {
+  position: relative;
+  min-height: 620px;
+  background-image: radial-gradient(#333 1px, transparent 1px);
+  background-size: 18px 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: auto;
+}
+
+.mechanismElement {
+  position: absolute;
+  width: 130px;
+  min-height: 78px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #2b2b2b;
+  padding: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.mechanismElement.selected {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent);
+}
+
+.mechanismElement strong {
+  display: block;
+  color: var(--accent);
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.mechanismElement small {
+  color: var(--muted);
+}
+
+.mechanismElement .stateStepper {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.mechanismRuntime {
+  position: absolute;
+  inset: 70px 120px;
+  z-index: 20000;
+  background: rgba(20,20,20,.94);
+  border: 1px solid var(--accent);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 20px 80px rgba(0,0,0,.65);
+  pointer-events: auto;
+}
+
+.mechanismRuntimeHeader {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.mechanismRuntimeHeader strong {
+  color: var(--accent);
+  margin-right: auto;
+}
+
+.logicNode.mechanism { border-color: #d76a8f; }
+
+.navFirstPoint{cursor:pointer;filter:drop-shadow(0 0 6px rgba(215,179,106,.9))}
+.navClosePreview{pointer-events:none}
+
+.logicNode .port{width:18px;height:18px;border:2px solid #111;box-shadow:0 0 0 2px rgba(255,255,255,.18),0 0 10px rgba(0,0,0,.6);z-index:5}
+.logicNode .port.input{left:-10px}.logicNode .port.output{right:-10px}
+.logicNode .port:hover,.logicNode .port.connectTarget{transform:scale(1.22);outline:2px solid var(--accent);outline-offset:2px}
+.logicNode.connectingCandidate{outline:1px dashed rgba(215,179,106,.65)}
+#wireLayer path{filter:drop-shadow(0 0 3px rgba(0,0,0,.8))}
+#wireLayer path.tempWire{stroke-dasharray:6 4}
+#wireLayer circle.wireEnd{pointer-events:none;filter:drop-shadow(0 0 4px rgba(0,0,0,.8))}
+#wireLayer circle.outputEnd{fill:#d7b36a}#wireLayer circle.inputEnd{fill:#6a8fd7}#wireLayer circle.tempEnd{fill:#fff}
+
+#sceneList li{display:grid;grid-template-columns:72px 1fr;gap:8px;align-items:center;min-height:54px;padding:6px}
+.sceneThumb{width:72px;height:44px;border:1px solid var(--line);border-radius:8px;background:#111;background-size:cover;background-position:center;overflow:hidden;display:grid;place-items:center;color:var(--muted);font-size:18px}
+.sceneText{min-width:0}.sceneText span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sceneText small{color:var(--muted)}
+button{white-space:nowrap}
+
+.parallaxBadge {
+  display: inline-block;
+  font-size: 10px;
+  color: var(--accent);
+  border: 1px solid rgba(215,179,106,.55);
+  border-radius: 4px;
+  padding: 1px 4px;
+  margin-left: 4px;
+}
+
+#sceneProps h2 { color: var(--accent); }
+
+#sceneProps {
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+#sceneProps h2 {
+  color: var(--accent);
+  margin-top: 0;
+}
+
+/* v43 */
+#sceneProps h2 { color: var(--accent); margin-top: 0; }
+.parallaxBadge {
+  display:inline-block;
+  font-size:10px;
+  color:var(--accent);
+  border:1px solid rgba(215,179,106,.55);
+  border-radius:4px;
+  padding:1px 4px;
+  margin-left:4px;
+}
+.mechanismElementImg {
+  width:100%;
+  height:46px;
+  object-fit:contain;
+  display:block;
+  margin:4px 0 6px;
+  pointer-events:none;
+}
+
+.dropSlot {
+  outline: 1px dashed rgba(215,179,106,.55);
+}
+.dropSlot:hover {
+  outline-color: var(--accent);
+}
+
+#sceneList li {
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.sceneThumb {
+  width:48px;
+  height:30px;
+  object-fit:cover;
+  border:1px solid var(--line);
+  border-radius:4px;
+  background:#111;
+  flex:0 0 auto;
+}
+
+
+/* v46 Colliders */
+.objectColliderOverlay {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+.objectColliderOverlay .colliderFill {
+  fill: rgba(97, 174, 255, .14);
+  stroke: rgba(97, 174, 255, .9);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+.objectColliderOverlay .colliderHandle {
+  fill: #fff;
+  stroke: rgba(97, 174, 255, .95);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.colliderModal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0,0,0,.72);
+  display: grid;
+  place-items: center;
+}
+.colliderWindow {
+  width: min(1100px, calc(100vw - 32px));
+  height: min(760px, calc(100vh - 32px));
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.55);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.colliderHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255,255,255,.035);
+}
+.colliderHeaderActions {
+  display: flex;
+  gap: 8px;
+}
+.colliderBody {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 230px 1fr;
+  min-height: 0;
+}
+.colliderTools {
+  border-right: 1px solid var(--line);
+  padding: 12px;
+  overflow: auto;
+  background: rgba(0,0,0,.18);
+}
+.colliderTools h3 {
+  margin: 10px 0 6px;
+}
+.colliderTools button {
+  width: 100%;
+  margin-bottom: 6px;
+}
+.colliderTools button.active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.colliderViewportWrap {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+}
+.colliderViewport {
+  width: 100%;
+  height: 100%;
+  min-height: 420px;
+  display: grid;
+  place-items: center;
+  background:
+    linear-gradient(45deg, rgba(255,255,255,.025) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(255,255,255,.025) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(255,255,255,.025) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(255,255,255,.025) 75%);
+  background-size: 24px 24px;
+  background-position: 0 0, 0 12px, 12px -12px, -12px 0px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+#colliderEditorSvg {
+  max-width: 100%;
+  max-height: 100%;
+  background: rgba(0,0,0,.25);
+  overflow: visible;
+  touch-action: none;
+}
+.colliderShape {
+  fill: rgba(215,179,106,.18);
+  stroke: var(--accent);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+.colliderTempLine {
+  stroke: rgba(255,255,255,.65);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 5;
+  vector-effect: non-scaling-stroke;
+}
+.colliderPoint {
+  fill: #fff;
+  stroke: var(--accent);
+  stroke-width: 2;
+  cursor: grab;
+  vector-effect: non-scaling-stroke;
+}
+.colliderPoint.first {
+  fill: var(--accent);
+}
+.colliderPoint.selected {
+  stroke: #fff;
+  stroke-width: 3;
+}
+.colliderPoint.closeCandidate {
+  fill: #7fc7a2;
+}
+.colliderImageFallback {
+  fill: rgba(255,255,255,.04);
+  stroke: rgba(255,255,255,.18);
+  stroke-dasharray: 5 5;
+}
+
+
+/* v48 Collider UI */
+.colliderToolbarBtn {
+  border-color: rgba(215,179,106,.75) !important;
+  color: var(--accent) !important;
+  font-weight: 700;
+}
+.colliderToolbarBtn:disabled {
+  opacity: .45;
+  color: var(--muted) !important;
+  border-color: var(--line) !important;
+}
+.colliderPropsBlock {
+  border: 1px solid rgba(215,179,106,.45);
+  background: rgba(215,179,106,.07);
+  border-radius: 8px;
+  padding: 10px;
+  margin: 12px 0;
+}
+.colliderFloatingBtn {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 999;
+}
+
+
+
+
+/* v50: botón discreto de collider */
+#openColliderEditorBtn {
+  font-weight: 600;
+}
+#openColliderEditorBtn:disabled {
+  opacity: .45;
+}
+
+
+/* v51: el botón de collider siempre es accionable */
+#openColliderEditorBtn {
+  opacity: 1 !important;
+}
+
+
+/* v52: acceso discreto a colliders */
+#openColliderEditorBtn {
+  font-weight: 600;
+}
+
+
+/* v60 UI Workflow */
+.propsDeleteActions {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+button.danger {
+  border-color: rgba(210,80,80,.65);
+}
+.clipEditor {
+  border: 1px solid rgba(215,179,106,.35);
+  border-radius: 8px;
+  padding: 10px;
+  margin: 12px 0;
+  background: rgba(215,179,106,.045);
+}
+.clipEditor h4 {
+  margin: 0 0 8px;
+  color: var(--accent);
+}
+.clipJsonDetails {
+  margin-top: 8px;
+}
+.hiddenParam {
+  display: none !important;
+}
+
+
+/* v62: validación de clips de spritesheet */
+#clipEditorStatus.warning {
+  color: #ffcc73;
+}
+#clipEditorStatus.ok {
+  color: #8bd49c;
+}
+
+
+/* v72: prefabs */
+#deletePrefabBtn:disabled,
+#instantiatePrefabBtn:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+
+/* v74: carteles globales */
+#messageBox {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9000;
+  display: none;
+  box-sizing: border-box;
+  padding: 12px 18px;
+  text-align: center;
+  line-height: 1.35;
+  pointer-events: none;
+  box-shadow: 0 8px 28px rgba(0,0,0,.35);
+}
+
+#messageBox.msg-top {
+  top: 24px;
+  bottom: auto;
+}
+
+#messageBox.msg-center {
+  top: 50%;
+  bottom: auto;
+  transform: translate(-50%, -50%);
+}
+
+#messageBox.msg-bottom {
+  top: auto;
+  bottom: 96px;
+}
+
+#messageBox.msg-center[style*="display: none"] {
+  transform: translateX(-50%);
+}
+
+.miniControl {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+}
+.miniControl input {
+  width: 64px;
+}
+
+.assetRow,
+.sceneAudioRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.assetRow span,
+.sceneAudioRow span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.audioAsset button,
+.sceneAudioRow button {
+  flex: 0 0 auto;
+}
+
+
+/* v80: audio rows compactos */
+.assetRow,
+.sceneAudioRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto auto;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.assetRow {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+}
+
+.assetRow span,
+.sceneAudioRow span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.iconBtn {
+  width: 24px;
+  min-width: 24px;
+  height: 24px;
+  padding: 0;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-weight: 700;
+}
+
+.sceneAudioRow .miniControl {
+  min-width: 74px;
+  max-width: 82px;
+}
+
+.sceneAudioRow .miniControl input {
+  width: 52px;
+  min-width: 0;
+}
+
+/* v80: scrollbars integradas */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(118, 161, 255, .85) rgba(12, 14, 20, .45);
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: rgba(12, 14, 20, .45);
+  border: none;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(118,161,255,.9), rgba(79,114,210,.9));
+  border-radius: 999px;
+  border: 2px solid rgba(12, 14, 20, .45);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(151,184,255,1), rgba(102,139,230,1));
+}
+
+*::-webkit-scrollbar-corner {
+  background: rgba(12, 14, 20, .45);
+}
+
+
+/* v81: escena inicial visible */
+.startSceneBox {
+  padding: 8px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.035);
+  margin: 6px 0 10px;
+}
+
+#sceneList li.startScene {
+  position: relative;
+}
+
+.startBadge {
+  margin-left: auto;
+  font-size: 10px;
+  opacity: .95;
+  color: #ffd66e;
+  white-space: nowrap;
+}
+
+/* v81: scrollbars minimalistas, solo barra desplazable */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(118, 161, 255, .9) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(118, 161, 255, .82);
+  border-radius: 999px;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(151, 184, 255, .95);
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent !important;
+}
+
+
+/* v82: bloque de interacción de inventario */
+#propUseItemEnabled {
+  accent-color: #76a1ff;
+}
+
+.props h3 {
+  margin-top: 14px;
+}
+
+
+/* v83: Play limpio, sin ayudas del editor */
+#stage.play .label,
+#stage.play .colliderOverlay,
+#stage.play .colliderHandle,
+#stage.play .navPoint,
+#stage.play .navEdge,
+#stage.play .navLabel,
+#stage.play .selectionBox,
+#stage.play .resizeHandle,
+#stage.play .rotateHandle,
+#stage.play .gizmo,
+#stage.play .path,
+#stage.play .editorOnly {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+#stage.play #navLayer {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+#stage.play .sceneObject.selected,
+#stage.play .sceneObject.locked {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+}
+
+#stage.play .sceneObject::before,
+#stage.play .sceneObject::after {
+  display: none !important;
+}
+
+
+/* v85: item del inventario pegado al cursor */
+.inventoryCursor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 12000;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: rgba(8, 10, 16, .72);
+  border: 1px solid rgba(118, 161, 255, .85);
+  box-shadow: 0 8px 22px rgba(0,0,0,.35);
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  overflow: hidden;
+  color: #fff;
+  font-size: 10px;
+  text-align: center;
+}
+
+.inventoryCursor.hidden {
+  display: none !important;
+}
+
+.inventoryCursor img {
+  max-width: 38px;
+  max-height: 38px;
+  pointer-events: none;
+}
+
+#stage.play.usingInventoryItem {
+  cursor: crosshair;
+}
+
+#stage.play.usingInventoryItem .sceneObject:not(.background) {
+  cursor: crosshair;
+}
+
+
+/* v86: cursor de inventario siempre por encima del escenario */
+.inventoryCursor {
+  z-index: 13000 !important;
+}
+
+#stage.play .inventoryCursor {
+  display: grid;
+}
+#stage.play .inventoryCursor.hidden {
+  display: none !important;
+}
+
+/* v87: opciones rápidas de aventura */
+#propUseItemHideSelf {
+  accent-color: #76a1ff;
+}
+
+
+/* v92: menú Archivo */
+.fileMenu {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
+
+.fileMenu button {
+  text-align: left;
+}
+
+#currentProjectFileInfo {
+  margin-top: 8px;
+  opacity: .78;
+}
+
+
+/* v93: herramientas en toolbar superior */
+.toolbar {
+  gap: 8px;
+  align-items: center;
+}
+
+.topToolGroup {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  margin-right: 8px;
+  padding: 4px 6px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.18);
+  border-radius: 12px;
+}
+
+.iconToolBtn {
+  width: 34px;
+  height: 32px;
+  min-width: 34px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+  line-height: 1;
+  border-radius: 9px;
+}
+
+.iconToolBtn.active {
+  outline: 2px solid rgba(118, 161, 255, .75);
+}
+
+.toolSep {
+  width: 1px;
+  height: 22px;
+  margin: 0 3px;
+  background: rgba(255,255,255,.16);
+}
+
+.toolbar #statusText {
+  margin-left: auto;
+}
+
+@media (max-width: 1200px) {
+  .topToolGroup {
+    max-width: 420px;
+    overflow-x: auto;
+  }
+}
+
+
+/* v94: modos como iconos blancos */
+.modeToolGroup {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.24);
+  border-radius: 12px;
+}
+
+.modeIconBtn {
+  width: 36px;
+  height: 32px;
+  min-width: 36px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  color: #fff !important;
+  font-size: 16px;
+  line-height: 1;
+  border-radius: 9px;
+  border-color: rgba(255,255,255,.16);
+  background: rgba(255,255,255,.055);
+}
+
+.modeIconBtn:hover {
+  background: rgba(255,255,255,.12);
+}
+
+.modeIconBtn.active {
+  color: #fff !important;
+  background: rgba(118, 161, 255, .26);
+  outline: 2px solid rgba(118, 161, 255, .78);
+  border-color: rgba(118, 161, 255, .9);
+}
+
+.topToolGroup {
+  margin-left: 0;
+}
+
+.modeToolGroup + .topToolGroup {
+  margin-left: 4px;
+}
+
+
+/* v95: evita que texto largo quede visible dentro de botones-icono */
+.iconToolBtn,
+.modeIconBtn {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: clip;
+}
+
+#openColliderEditorBtn {
+  font-size: 16px;
+}
+
+
+/* v96: el botón de collider nunca muestra etiqueta textual */
+#openColliderEditorBtn {
+  width: 34px !important;
+  min-width: 34px !important;
+  max-width: 34px !important;
+  font-size: 16px !important;
+  text-indent: 0 !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+}
+
+
+/* v97: importación directa para splash */
+#importSplashImageBtn,
+#importSplashAudioBtn {
+  margin-top: -4px;
+  margin-bottom: 6px;
+}
+
+
+/* v98: splash visible por encima del escenario */
+.splashScreen {
+  position: absolute;
+  inset: 0;
+  z-index: 14000;
+  display: grid;
+  place-items: center;
+  background: #000;
+}
+
+.splashScreen.hidden {
+  display: none !important;
+}
+
+.splashScreen img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+
+/* v99: zoom visual de edición */
+#stageWrap {
+  overflow: auto;
+}
+
+#stage {
+  transform-origin: 0 0;
+}
+
+#zoomStatus {
+  font-size: 12px;
+  opacity: .82;
+  padding: 4px 8px;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 999px;
+  background: rgba(0,0,0,.20);
+  white-space: nowrap;
+}
+
+
+/* v100: control compacto de zoom */
+.zoomControlGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 4px;
+}
+
+.zoomResetBtn {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  color: #fff !important;
+  font-size: 15px;
+  line-height: 1;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.055);
+}
+
+.zoomResetBtn:hover {
+  background: rgba(255,255,255,.14);
+  border-color: rgba(118, 161, 255, .75);
+}
+
+
+/* Beta 0.1.1: editor de animaciones */
+.animationEditor {
+  position: absolute;
+  inset: 58px 12px 12px 12px;
+  background: rgba(13,16,24,.96);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 16px;
+  overflow: hidden;
+  z-index: 1500;
+  display: flex;
+  flex-direction: column;
+}
+
+.animationEditor.hidden { display: none !important; }
+
+.animationEditor > header {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 10px;
+  background: rgba(0,0,0,.28);
+  border-bottom: 1px solid rgba(255,255,255,.10);
+}
+
+.animationLayout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 0;
+  flex: 1;
+}
+
+.animationClipPanel,
+.animationInspector {
+  padding: 12px;
+  overflow: auto;
+}
+
+.animationClipPanel {
+  border-right: 1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.16);
+}
+
+.grid3 {
+  display: grid;
+  grid-template-columns: 1.3fr .7fr .8fr;
+  gap: 8px;
+}
+
+.grid6 {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(80px, 1fr));
+  gap: 8px;
+}
+
+.keyframeTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+.keyframeTable th,
+.keyframeTable td {
+  border-bottom: 1px solid rgba(255,255,255,.10);
+  padding: 6px;
+  text-align: left;
+}
+
+.keyframeTable tr.selected {
+  background: rgba(118,161,255,.18);
+}
+
+#transformClipList li small {
+  margin-left: auto;
+}
+
+
+/* Beta 0.1.2: timeline visual de animación */
+.animationVisualPanel {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.animationPreviewPanel,
+.animationTimelinePanel {
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 14px;
+  background: rgba(0,0,0,.18);
+  overflow: hidden;
+}
+
+.animationPreviewPanel header,
+.animationTimelinePanel header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: rgba(255,255,255,.04);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+
+#animationPreviewTime {
+  margin-left: auto;
+  font-size: 12px;
+  opacity: .75;
+}
+
+.animationPreviewStage {
+  height: 220px;
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(45deg, rgba(255,255,255,.035) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(255,255,255,.035) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(255,255,255,.035) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(255,255,255,.035) 75%);
+  background-size: 22px 22px;
+  background-position: 0 0, 0 11px, 11px -11px, -11px 0px;
+}
+
+.animationPreviewObject {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 80px;
+  height: 80px;
+  transform-origin: 50% 50%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  border: 1px dashed rgba(118,161,255,.55);
+  border-radius: 6px;
+}
+
+.animationTimelinePanel header input[type="range"] {
+  flex: 1;
+}
+
+#animationTimelinePlayBtn,
+#animationTimelineStopBtn {
+  width: 30px;
+  min-width: 30px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+}
+
+.animationTimeline {
+  position: relative;
+  padding: 30px 12px 12px 68px;
+  min-height: 190px;
+  user-select: none;
+}
+
+.timelineRuler {
+  position: absolute;
+  left: 68px;
+  right: 12px;
+  top: 8px;
+  height: 18px;
+  border-bottom: 1px solid rgba(255,255,255,.16);
+  font-size: 10px;
+  color: rgba(255,255,255,.68);
+}
+
+.timelineTick {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+}
+
+.timelineTick::after {
+  content: "";
+  display: block;
+  width: 1px;
+  height: 5px;
+  background: rgba(255,255,255,.25);
+  margin: 2px auto 0;
+}
+
+.timelineTrack {
+  position: relative;
+  height: 34px;
+  margin-bottom: 8px;
+}
+
+.timelineTrack > span {
+  position: absolute;
+  left: -56px;
+  top: 8px;
+  width: 48px;
+  text-align: right;
+  font-size: 12px;
+  opacity: .82;
+}
+
+.timelineRail {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 15px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.13);
+}
+
+.timelineTrack.selected .timelineRail {
+  background: rgba(118,161,255,.28);
+}
+
+.timelineKey {
+  position: absolute;
+  top: 8px;
+  width: 14px;
+  height: 14px;
+  border: 1px solid rgba(255,255,255,.85);
+  background: rgba(118,161,255,.85);
+  transform: translateX(-50%) rotate(45deg);
+  border-radius: 3px;
+  cursor: grab;
+  box-shadow: 0 2px 10px rgba(0,0,0,.35);
+}
+
+.timelineKey.selected {
+  background: #ffd66e;
+  outline: 2px solid rgba(255,214,110,.35);
+}
+
+.timelineKey:active {
+  cursor: grabbing;
+}
+
+.animationPlayhead {
+  position: absolute;
+  top: 8px;
+  bottom: 10px;
+  width: 2px;
+  background: #ffd66e;
+  box-shadow: 0 0 8px rgba(255,214,110,.55);
+  pointer-events: none;
+}
+
+@media (max-width: 1200px) {
+  .animationVisualPanel {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* Beta 0.1.3: preview/scrub fixes */
+.timelineKey {
+  width: 9px !important;
+  height: 9px !important;
+  top: 10px !important;
+  border-radius: 2px !important;
+}
+
+.timelineKey.selected {
+  width: 11px !important;
+  height: 11px !important;
+  top: 9px !important;
+}
+
+.animationPlayhead {
+  width: 3px !important;
+  cursor: ew-resize;
+  pointer-events: auto !important;
+  z-index: 8;
+}
+
+.animationTimeline {
+  cursor: ew-resize;
+}
+
+.animationTimeline.scrubbing {
+  cursor: grabbing;
+}
+
+.animationPreviewObject {
+  will-change: transform;
+}
+
+
+/* Beta 0.1.4: timeline usable, keyframes más pequeños y carril de scrub */
+.animationTimeline {
+  padding-top: 58px !important;
+}
+
+.animationScrubLane {
+  position: absolute;
+  left: 68px;
+  right: 12px;
+  top: 30px;
+  height: 22px;
+  cursor: ew-resize;
+  z-index: 7;
+  border-radius: 8px;
+}
+
+.animationScrubLane:hover {
+  background: rgba(255,255,255,.045);
+}
+
+.animationScrubRail {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 10px;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255,214,110,.38);
+}
+
+.timelineKey {
+  width: 5px !important;
+  height: 5px !important;
+  top: 12px !important;
+  border-radius: 1px !important;
+  border-width: 1px !important;
+}
+
+.timelineKey.selected {
+  width: 7px !important;
+  height: 7px !important;
+  top: 11px !important;
+}
+
+.animationPlayhead {
+  top: 30px !important;
+  bottom: 10px !important;
+  width: 2px !important;
+  background: #6ea8ff !important;
+  box-shadow: 0 0 8px rgba(110,168,255,.65) !important;
+  pointer-events: none !important;
+}
+
+.animationTimeline.scrubbing .animationPlayhead {
+  background: #ffd66e !important;
+  box-shadow: 0 0 9px rgba(255,214,110,.7) !important;
+}
+
+.animationTimeline .timelineTrack {
+  cursor: default;
+}
+
+.animationTimeline .timelineRail {
+  cursor: crosshair;
+}
+
+
+/* Beta 0.1.5: keyframes 50% más pequeños */
+.timelineKey {
+  width: 2.5px !important;
+  height: 2.5px !important;
+  top: 13.25px !important;
+  border-radius: .75px !important;
+}
+
+.timelineKey.selected {
+  width: 3.5px !important;
+  height: 3.5px !important;
+  top: 12.75px !important;
+}
+
+
+/* Beta 0.1.6: rombos de keyframe realmente pequeños */
+.animationTimeline .timelineTrack .timelineKey,
+.animationTimeline button.timelineKey,
+button.timelineKey.timelineKey {
+  width: 1.75px !important;
+  height: 1.75px !important;
+  min-width: 1.75px !important;
+  max-width: 1.75px !important;
+  padding: 0 !important;
+  top: 14px !important;
+  transform: translateX(-50%) rotate(45deg) !important;
+  border-radius: 0 !important;
+  border: 1px solid rgba(255,255,255,.80) !important;
+  overflow: visible !important;
+}
+
+.animationTimeline .timelineTrack .timelineKey.selected,
+.animationTimeline button.timelineKey.selected,
+button.timelineKey.timelineKey.selected {
+  width: 3px !important;
+  height: 3px !important;
+  min-width: 3px !important;
+  max-width: 3px !important;
+  top: 13.35px !important;
+}
+
+/* Beta 0.1.6: layout principal adaptable */
+.app {
+  display: grid;
+  grid-template-columns: clamp(190px, 18vw, 300px) minmax(360px, 1fr) clamp(220px, 24vw, 380px) !important;
+  min-width: 0 !important;
+}
+
+.sidebar,
+.rightbar,
+.main,
+#stageWrap,
+#stage,
+.animationEditor,
+.logicEditor,
+.mechanismEditor {
+  min-width: 0 !important;
+}
+
+.sidebar {
+  width: auto !important;
+  max-width: none !important;
+  overflow-x: hidden !important;
+}
+
+.rightbar {
+  width: auto !important;
+  max-width: none !important;
+  overflow-x: hidden !important;
+}
+
+.rightbar input,
+.rightbar select,
+.rightbar textarea,
+.sidebar input,
+.sidebar select,
+.sidebar textarea {
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.grid2,
+.grid3,
+.grid6 {
+  min-width: 0 !important;
+}
+
+/* En ventanas medianas, comprimimos paneles antes de cortar contenido */
+@media (max-width: 1250px) {
+  .app {
+    grid-template-columns: minmax(160px, 21vw) minmax(300px, 1fr) minmax(190px, 28vw) !important;
+  }
+
+  .rightbar,
+  .sidebar {
+    font-size: 13px;
+  }
+
+  .rightbar .grid2,
+  .sidebar .grid2 {
+    grid-template-columns: 1fr !important;
+  }
+
+  .animationEditor {
+    inset: 58px 6px 8px 6px !important;
+  }
+
+  .animationLayout {
+    grid-template-columns: minmax(145px, 22vw) minmax(320px, 1fr) !important;
+  }
+
+  .animationVisualPanel {
+    grid-template-columns: minmax(220px, 35%) minmax(280px, 1fr) !important;
+  }
+}
+
+/* En ventanas estrechas, apilamos para evitar cortes imposibles */
+@media (max-width: 980px) {
+  .app {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto minmax(420px, 1fr) auto !important;
+  }
+
+  .sidebar,
+  .rightbar {
+    max-height: 34vh;
+    overflow: auto !important;
+    border-right: none !important;
+    border-left: none !important;
+  }
+
+  .rightbar {
+    order: 3;
+  }
+
+  .main {
+    order: 2;
+  }
+
+  .sidebar {
+    order: 1;
+  }
+
+  .animationLayout,
+  .animationVisualPanel {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+
+/* Beta 0.1.7: layout real sobre #app y editor dentro del workspace */
+#app {
+  grid-template-columns: clamp(190px, 18vw, 300px) minmax(360px, 1fr) clamp(220px, 24vw, 360px) !important;
+  min-width: 0 !important;
+}
+
+.workspace {
+  overflow: hidden !important;
+  isolation: isolate;
+}
+
+.animationEditor,
+.logicEditor,
+.mechanismEditor {
+  max-width: 100% !important;
+  width: auto !important;
+  box-sizing: border-box !important;
+  right: 8px !important;
+  left: 8px !important;
+}
+
+.sidebar,
+.sidebar.right {
+  min-width: 0 !important;
+  width: auto !important;
+  max-width: none !important;
+}
+
+@media (max-width: 1250px) {
+  #app {
+    grid-template-columns: minmax(160px, 20vw) minmax(300px, 1fr) minmax(190px, 27vw) !important;
+  }
+}
+
+@media (max-width: 980px) {
+  #app {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto minmax(420px, 1fr) auto !important;
+  }
+}
+
+/* Beta 0.1.7: keyframes pequeños pero visibles */
+.animationTimeline .timelineTrack .timelineKey,
+.animationTimeline button.timelineKey {
+  width: 2px !important;
+  height: 2px !important;
+  min-width: 2px !important;
+  max-width: 2px !important;
+  top: 13.75px !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.45), 0 0 4px rgba(118,161,255,.45) !important;
+}
+
+.animationTimeline .timelineTrack .timelineKey.selected,
+.animationTimeline button.timelineKey.selected {
+  width: 3px !important;
+  height: 3px !important;
+  min-width: 3px !important;
+  max-width: 3px !important;
+  top: 13.25px !important;
+}
+
+
+/* Beta 0.2.0: acciones de keyframe por canales */
+.animationInspector .row {
+  grid-template-columns: repeat(4, minmax(0, auto)) !important;
+  align-items: center;
+  justify-content: start;
+  gap: 8px;
+}
+
+#insertFullTransformKeyBtn {
+  border-color: rgba(118,161,255,.55);
+}
+
+
+/* Beta 0.2.2/0.2.6: transform gizmos manipulativos.
+   El pivote debe coincidir con el preview: centro del objeto. */
+.sceneObject {
+  transform-origin: 50% 50% !important;
+}
+
+.transformGizmoLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.transformHandle {
+  position: absolute;
+  pointer-events: auto;
+  width: 13px;
+  height: 13px;
+  min-width: 13px;
+  max-width: 13px;
+  padding: 0;
+  margin: 0;
+  border: 1px solid rgba(255,255,255,.95);
+  background: rgba(118,161,255,.95);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.65), 0 2px 8px rgba(0,0,0,.45);
+  z-index: 10000;
+}
+
+.scaleHandle {
+  border-radius: 3px;
+}
+
+.scaleHandle.nw { left: -7px; top: -7px; cursor: nwse-resize; }
+.scaleHandle.ne { right: -7px; top: -7px; cursor: nesw-resize; }
+.scaleHandle.sw { left: -7px; bottom: -7px; cursor: nesw-resize; }
+.scaleHandle.se { right: -7px; bottom: -7px; cursor: nwse-resize; }
+
+.rotateHandle {
+  left: 50%;
+  top: -34px;
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  max-width: 18px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: rgba(255,214,110,.95);
+  cursor: grab;
+}
+
+.rotateHandle::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 17px;
+  width: 1px;
+  height: 18px;
+  background: rgba(255,214,110,.75);
+}
+
+.rotateHandle::after {
+  content: "↻";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #111;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.sceneObject.dragging .transformGizmoLayer {
+  opacity: .45;
+}
+
+
+/* Beta 0.2.3: checkboxes compactos y alineados */
+label.check,
+.check {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 6px !important;
+  width: auto !important;
+  max-width: 100% !important;
+  margin: 6px 0 !important;
+  line-height: 1.25;
+}
+
+label.check input[type="checkbox"],
+.check input[type="checkbox"],
+input[type="checkbox"] {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  flex: 0 0 auto !important;
+}
+
+.panel label:has(input[type="checkbox"]) {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  width: auto !important;
+}
+
+
+/* Beta 0.2.4: gizmos dentro del preview de animación */
+.animationPreviewObject {
+  overflow: visible !important;
+}
+
+.previewTransformGizmoLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.previewTransformHandle {
+  position: absolute;
+  pointer-events: auto;
+  width: 12px;
+  height: 12px;
+  min-width: 12px;
+  max-width: 12px;
+  padding: 0;
+  margin: 0;
+  border: 1px solid rgba(255,255,255,.95);
+  background: rgba(118,161,255,.96);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.7), 0 2px 8px rgba(0,0,0,.45);
+  z-index: 21;
+}
+
+.previewScaleHandle {
+  border-radius: 3px;
+}
+
+.previewScaleHandle.nw { left: -7px; top: -7px; cursor: nwse-resize; }
+.previewScaleHandle.ne { right: -7px; top: -7px; cursor: nesw-resize; }
+.previewScaleHandle.sw { left: -7px; bottom: -7px; cursor: nesw-resize; }
+.previewScaleHandle.se { right: -7px; bottom: -7px; cursor: nwse-resize; }
+
+.previewRotateHandle {
+  left: 50%;
+  top: -34px;
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  max-width: 18px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: rgba(255,214,110,.96);
+  cursor: grab;
+}
+
+.previewRotateHandle::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 17px;
+  width: 1px;
+  height: 18px;
+  background: rgba(255,214,110,.75);
+}
+
+.previewRotateHandle::after {
+  content: "↻";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #111;
+  font-size: 12px;
+  line-height: 1;
+}
+
+#animationPrevKeyBtn,
+#animationNextKeyBtn {
+  min-width: 38px;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+
+/* Beta 0.2.5: reparación de gizmos del preview */
+.animationPreviewStage {
+  overflow: visible !important;
+}
+
+.animationPreviewObject {
+  position: absolute !important;
+  overflow: visible !important;
+  pointer-events: auto !important;
+}
+
+.previewTransformGizmoLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.previewTransformHandle {
+  position: absolute;
+  pointer-events: auto;
+  width: 12px !important;
+  height: 12px !important;
+  min-width: 12px !important;
+  max-width: 12px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 1px solid rgba(255,255,255,.95) !important;
+  background: rgba(118,161,255,.96) !important;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.7), 0 2px 8px rgba(0,0,0,.45) !important;
+  z-index: 51;
+}
+
+.previewMoveHandle {
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
+  background: rgba(120,220,160,.96) !important;
+  cursor: move;
+}
+
+.previewMoveHandle::after {
+  content: "✥";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #111;
+  font-size: 10px;
+}
+
+.previewScaleHandle {
+  border-radius: 3px;
+}
+
+.previewScaleHandle.nw { left: -7px; top: -7px; cursor: nwse-resize; }
+.previewScaleHandle.ne { right: -7px; top: -7px; cursor: nesw-resize; }
+.previewScaleHandle.sw { left: -7px; bottom: -7px; cursor: nesw-resize; }
+.previewScaleHandle.se { right: -7px; bottom: -7px; cursor: nwse-resize; }
+
+.previewRotateHandle {
+  left: 50%;
+  top: -34px;
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  max-width: 18px !important;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: rgba(255,214,110,.96) !important;
+  cursor: grab;
+}
+
+.previewRotateHandle::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 17px;
+  width: 1px;
+  height: 18px;
+  background: rgba(255,214,110,.75);
+}
+
+.previewRotateHandle::after {
+  content: "↻";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #111;
+  font-size: 12px;
+  line-height: 1;
+}
+
+
+/* Beta 0.2.6: pivote unificado entre preview y runtime */
+.sceneObject,
+.sceneObject.player,
+.sceneObject.item,
+.sceneObject.prop,
+.sceneObject.hotspot,
+.sceneObject.character,
+.sceneObject.door {
+  transform-origin: 50% 50% !important;
+}
+
+.animationPreviewObject {
+  transform-origin: 50% 50% !important;
+}
+
+
+/* Beta 0.3.0: animation tabs */
+.animationTabs {
+  display: flex;
+  gap: 6px;
+  margin: 14px 0 10px;
+  border-bottom: 1px solid rgba(255,255,255,.12);
+}
+
+.animationTabs button {
+  border-radius: 8px 8px 0 0;
+  margin-bottom: -1px;
+}
+
+.animationTabs button.active {
+  background: var(--accent);
+  color: #111;
+}
+
+.animationTabPanel {
+  display: none;
+}
+
+.animationTabPanel.active {
+  display: block;
+}
+
+.pathButtonRow {
+  grid-template-columns: repeat(5, minmax(0, auto)) !important;
+  align-items: center;
+  justify-content: start;
+  gap: 8px;
+}
+
+.pathLists {
+  display: grid;
+  grid-template-columns: minmax(180px, .8fr) minmax(260px, 1.2fr);
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.compactList li {
+  padding: 6px 8px;
+}
+
+/* Beta 0.3.0: path editor overlay */
+.pathEditorOverlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1350;
+}
+
+.pathEditorSvg {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.pathEditorLine {
+  fill: none;
+  stroke: rgba(255,214,110,.92);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 8 5;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+
+.pathPointHandle {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  width: 15px !important;
+  height: 15px !important;
+  min-width: 15px !important;
+  max-width: 15px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 999px;
+  border: 2px solid rgba(255,255,255,.95);
+  background: rgba(255,214,110,.96);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.65), 0 2px 8px rgba(0,0,0,.45);
+  cursor: move;
+}
+
+.pathPointHandle.selected {
+  background: rgba(120,220,160,.98);
+  outline: 3px solid rgba(120,220,160,.28);
+}
+
+.timelineKey.pathKey {
+  background: rgba(255,214,110,.95) !important;
+}
+
+@media (max-width: 1100px) {
+  .pathLists {
+    grid-template-columns: 1fr;
+  }
+  .pathButtonRow {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+
+/* Beta 0.3.1: visual path canvas inside Animation > Path */
+.pathSceneCanvasPanel {
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.18);
+  border-radius: 12px;
+  overflow: hidden;
+  margin: 10px 0 12px;
+}
+
+.pathSceneCanvasPanel > header {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  background: rgba(0,0,0,.22);
+  border-bottom: 1px solid rgba(255,255,255,.10);
+}
+
+.pathSceneCanvas {
+  position: relative;
+  width: 100%;
+  min-height: 220px;
+  max-height: 520px;
+  overflow: hidden;
+  background:
+    linear-gradient(45deg, rgba(255,255,255,.04) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(255,255,255,.04) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(255,255,255,.04) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(255,255,255,.04) 75%);
+  background-size: 24px 24px;
+  background-position: 0 0, 0 12px, 12px -12px, -12px 0;
+  cursor: crosshair;
+}
+
+.pathSceneTemplate {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.pathSceneObjectRef {
+  position: absolute;
+  transform-origin: 50% 50%;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: .46;
+  border: 1px dashed rgba(255,255,255,.12);
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  color: rgba(255,255,255,.45);
+  overflow: hidden;
+}
+
+.pathSceneObjectRef.bg {
+  opacity: .82;
+  background-size: cover;
+  border: 0;
+}
+
+.pathSceneObjectRef.target {
+  opacity: .78;
+  border: 2px solid rgba(120,220,160,.85);
+  box-shadow: 0 0 0 2px rgba(0,0,0,.35);
+}
+
+.pathCanvasSvg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 30;
+}
+
+.pathCanvasLine {
+  fill: none;
+  stroke: rgba(255,214,110,.96);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 10 6;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,.75));
+}
+
+.pathCanvasPoint {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 16px !important;
+  height: 16px !important;
+  min-width: 16px !important;
+  max-width: 16px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  z-index: 45;
+  border-radius: 999px;
+  border: 2px solid rgba(255,255,255,.96);
+  background: rgba(255,214,110,.96);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.7), 0 2px 8px rgba(0,0,0,.55);
+  cursor: move;
+}
+
+.pathCanvasPoint.selected {
+  background: rgba(120,220,160,.98);
+  outline: 4px solid rgba(120,220,160,.28);
+}
+
+.pathCanvasPoint::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  background: rgba(0,0,0,.55);
+  border-radius: 999px;
+}
+
+.pathCanvasObjectMarker {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 22px;
+  height: 22px;
+  z-index: 42;
+  border-radius: 999px;
+  border: 2px solid rgba(118,161,255,.95);
+  background: rgba(118,161,255,.18);
+  box-shadow: 0 0 12px rgba(118,161,255,.65);
+  pointer-events: none;
+}
+
+.pathSceneEmpty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}
+
+
+/* Beta 0.3.2: edición fluida y modo lápiz */
+.pathDrawToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0;
+  padding: 8px;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 10px;
+  background: rgba(0,0,0,.16);
+}
+
+.pathDrawToolbar button.active {
+  background: var(--accent);
+  color: #111;
+}
+
+.pathDrawToolbar label {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 6px;
+  width: auto !important;
+  margin: 0;
+}
+
+.pathDrawToolbar input[type="number"] {
+  width: 72px;
+}
+
+.pathSceneCanvas.pencilMode {
+  cursor: crosshair;
+}
+
+.pathSceneCanvas.pencilMode .pathCanvasPoint {
+  opacity: .35;
+  pointer-events: none;
+}
+
+.pathSceneCanvas.drawing {
+  cursor: none;
+}
+
+.pathCanvasDrawLine {
+  fill: none;
+  stroke: rgba(120,220,160,.95);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: none;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,.65));
+}
+
+.pathCanvasPoint {
+  will-change: left, top;
+}
+
+.pathCanvasLine {
+  will-change: contents;
+}
+
+
+/* Beta 0.3.3: path point drag robusto y lista plegada */
+.pathPointDetails {
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: rgba(0,0,0,.12);
+}
+
+.pathPointDetails summary {
+  cursor: pointer;
+  user-select: none;
+  font-weight: 600;
+}
+
+.pathPointDetails[open] summary {
+  margin-bottom: 8px;
+}
+
+.pathSceneCanvas,
+.pathCanvasPoint {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.pathSceneCanvas.draggingPoint {
+  cursor: grabbing;
+}
+
+.pathSceneCanvas.draggingPoint .pathCanvasPoint {
+  transition: none !important;
+}
+
+.pathCanvasPoint:active {
+  cursor: grabbing;
+}
+
+
+/* Beta 0.3.4: drag de puntos por delegación desde canvas */
+.pathCanvasPoint {
+  pointer-events: auto !important;
+  cursor: grab !important;
+  display: block !important;
+  box-sizing: border-box !important;
+  touch-action: none !important;
+}
+
+.pathCanvasPoint:active,
+.pathSceneCanvas.draggingPoint .pathCanvasPoint.selected {
+  cursor: grabbing !important;
+}
+
+.pathCanvasPoint::after {
+  pointer-events: none !important;
+}
+
+.pathSceneCanvas.draggingPoint {
+  cursor: grabbing !important;
+}
+
+
+/* Beta 0.3.5: click-to-add y drag con fallback mouse */
+.pathSceneCanvas {
+  cursor: crosshair;
+}
+
+.pathSceneCanvas .pathCanvasPoint {
+  cursor: grab !important;
+}
+
+.pathSceneCanvas.draggingPoint,
+.pathSceneCanvas.draggingPoint .pathCanvasPoint {
+  cursor: grabbing !important;
+}
+
+.pathSceneCanvas.pencilMode {
+  cursor: crosshair;
+}
+
+#pathCycleDuration {
+  width: 110px;
+}
+
+
+/* Beta 0.3.6: botones de base de datos local visibles */
+#saveLocalDbBtn,
+#loadLocalDbBtn {
+  border-color: rgba(120,220,160,.45);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Beta 0.5.5: corrección real de layout.
+   El HTML usa #app y .sidebar.right, no .app ni .rightbar. */
+#app {
+  display: grid !important;
+  grid-template-columns: clamp(190px, 17vw, 280px) minmax(0, 1fr) clamp(240px, 24vw, 360px) !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+#app > main,
+#app > .main {
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+#app > .sidebar.left,
+#app > .sidebar.right {
+  min-width: 0 !important;
+  max-width: none !important;
+  width: auto !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  box-sizing: border-box !important;
+}
+
+#app > .sidebar.right {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  grid-column: 3 !important;
+}
+
+#stageWrap,
+#stage,
+.logicEditor,
+.animationEditor,
+.mechanismEditor {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+@media (max-width: 1300px) {
+  #app {
+    grid-template-columns: minmax(175px, 18vw) minmax(0, 1fr) minmax(220px, 25vw) !important;
+  }
+
+  #app > .sidebar.left,
+  #app > .sidebar.right {
+    padding: 8px !important;
+    font-size: 12px !important;
+  }
+
+  #app > .sidebar.right .grid2,
+  #app > .sidebar.left .grid2 {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+
+/* Beta 0.5.6: panel derecho fijo, independiente del grid central.
+   Evita que el stage/editor de nodos lo empuje fuera de pantalla. */
+:root {
+  --right-panel-fixed-width: 360px;
+}
+
+body {
+  overflow: hidden !important;
+}
+
+#app {
+  display: grid !important;
+  grid-template-columns: clamp(190px, 17vw, 280px) minmax(0, 1fr) !important;
+  width: calc(100vw - var(--right-panel-fixed-width)) !important;
+  height: 100vh !important;
+  min-width: 0 !important;
+  max-width: calc(100vw - var(--right-panel-fixed-width)) !important;
+  overflow: hidden !important;
+}
+
+#app > main,
+#app > .main {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+#rightSidebar,
+#app > .sidebar.right {
+  position: fixed !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  left: auto !important;
+  width: var(--right-panel-fixed-width) !important;
+  min-width: var(--right-panel-fixed-width) !important;
+  max-width: var(--right-panel-fixed-width) !important;
+  height: 100vh !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: 9000 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  box-sizing: border-box !important;
+  background: var(--panel) !important;
+  border-left: 1px solid var(--line) !important;
+  border-right: 0 !important;
+}
+
+#rightSidebar *,
+#app > .sidebar.right * {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+#stageWrap,
+#stage,
+.logicEditor,
+.animationEditor,
+.mechanismEditor {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+@media (max-width: 1250px) {
+  :root {
+    --right-panel-fixed-width: 300px;
+  }
+
+  #rightSidebar,
+  #app > .sidebar.right {
+    padding: 8px !important;
+    font-size: 12px !important;
+  }
+
+  #rightSidebar .grid2,
+  #app > .sidebar.right .grid2 {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 980px) {
+  :root {
+    --right-panel-fixed-width: 260px;
+  }
+}
+
+
+/* Beta 0.5.10: marca limpia y separadores de menú superior */
+.appBrand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 9px !important;
+  margin: 0 0 14px !important;
+  font-size: 20px !important;
+  line-height: 1.1 !important;
+  color: var(--accent) !important;
+}
+
+.appLogoIcon {
+  width: 18px;
+  height: 18px;
+  display: inline-block;
+  flex: 0 0 auto;
+  border-radius: 5px;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.35), 0 2px 8px rgba(0,0,0,.25);
+}
+
+.appTitleText {
+  display: inline-block;
+}
+
+.topToolbarGroups {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 0 8px;
+}
+
+.toolbarGroup {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.toolbarSeparator {
+  width: 1px;
+  align-self: stretch;
+  min-height: 28px;
+  background: var(--line);
+  margin: 0 4px;
+  opacity: .9;
+}
+
+
+/* Beta 0.5.11: grupos del menú superior en cajas separadas */
+.topToolbarGroups {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 14px !important;
+  margin: 6px 0 12px !important;
+}
+
+.toolbarGroupBox {
+  display: inline-flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+  padding: 7px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 12px !important;
+  background: var(--panel2) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.03), 0 1px 0 rgba(0,0,0,.2) !important;
+}
+
+.toolbarGroupBox button {
+  margin: 0 !important;
+}
+
+.toolbarSeparator {
+  display: none !important;
+}
+
+
+/* Beta 0.5.12: corregir bloques grises bajo iconos del menú superior */
+.modeToolGroup {
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  gap: 0 !important;
+  box-shadow: none !important;
+}
+
+.modeToolGroup .topToolbarGroups {
+  margin: 0 !important;
+}
+
+.modeIconBtn,
+.iconToolBtn {
+  -webkit-appearance: none;
+  appearance: none;
+  background-clip: padding-box;
+  box-shadow: none;
+}
+
+.toolbarGroupBox,
+.topToolGroup {
+  overflow: hidden;
+}
+
+
+/* Beta 0.6.0: editor de estados de objeto */
+.objectStatesBlock {
+  border-color: rgba(118, 161, 255, .32);
+  background: rgba(118, 161, 255, .055);
+}
+
+.objectStatesBlock h3 {
+  color: var(--accent);
+}
+
+.objectStatesBlock .danger {
+  background: rgba(180, 56, 56, .65);
+}
+
+
+/* Beta 0.7.0: editor de física Matter.js */
+.physicsSceneBlock,
+.physicsPropsBlock {
+  border-color: rgba(106, 194, 255, .35);
+  background: rgba(106, 194, 255, .055);
+}
+
+.physicsSceneBlock h3,
+.physicsPropsBlock h3 {
+  color: #8fd3ff;
+}
+
+.physicsDebugLayer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--stage-w, 1280px);
+  height: var(--stage-h, 720px);
+  pointer-events: none;
+  z-index: 9997;
+  overflow: visible;
+}
+
+.physicsDebugBody {
+  fill: rgba(100, 190, 255, .10);
+  stroke: rgba(100, 190, 255, .9);
+  stroke-width: 2;
+}
+
+.physicsDebugBody.sensor {
+  fill: rgba(255, 210, 80, .12);
+  stroke: rgba(255, 210, 80, .95);
+  stroke-dasharray: 6 4;
+}
+
+.physicsDebugBody.static {
+  fill: rgba(220, 220, 220, .08);
+  stroke: rgba(220, 220, 220, .75);
+}
+
+.physicsDebugPivot {
+  fill: #fff;
+  stroke: #111;
+  stroke-width: 2;
+}
+
+.physicsEditor {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+.physicsEditor > header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 10px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(0,0,0,.22);
+}
+
+.physicsEditorBody {
+  position: relative;
+  min-height: 72px;
+  padding: 10px;
+}
+
+.physicsEditor button.active {
+  outline: 2px solid rgba(106, 194, 255, .75);
+}
+
+
+/* Beta 0.7.1: Outliner con acciones */
+.outlinerRow {
+  display: grid !important;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.outlinerMainBtn {
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.outlinerMainBtn:hover {
+  border-color: transparent;
+}
+
+.outlinerActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.outlinerIconBtn {
+  width: 26px;
+  height: 24px;
+  min-width: 26px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.outlinerIconBtn.danger {
+  background: rgba(180, 56, 56, .7);
+}
+
+.sceneObject.dragging {
+  cursor: grabbing !important;
+  outline: 2px solid rgba(118, 161, 255, .9);
+}
+
+#undoBtn[disabled],
+#redoBtn[disabled] {
+  opacity: .35;
+  cursor: not-allowed;
+}
+
+
+/* Beta 0.7.2: arrastre más fiable */
+.sceneObject {
+  user-select: none;
+  -webkit-user-drag: none;
+  touch-action: none;
+}
+
+
+/* Beta 0.7.3: arrastre directo del editor */
+.sceneObject,
+.sceneObject * {
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.sceneObject {
+  touch-action: none;
+}
+
+.sceneObject.dragging {
+  cursor: grabbing !important;
+}
+
+
+/* Beta 0.7.4: inventario posicionable y tamaño de slots */
+.gameInventory {
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  flex-wrap: wrap;
+}
+
+.gameInventory.inv-top-left {
+  left: 12px !important;
+  top: 12px !important;
+}
+
+.gameInventory.inv-top-center {
+  left: 50% !important;
+  top: 12px !important;
+  transform: translateX(-50%) !important;
+}
+
+.gameInventory.inv-top-right {
+  right: 12px !important;
+  top: 12px !important;
+}
+
+.gameInventory.inv-bottom-left {
+  left: 12px !important;
+  bottom: 12px !important;
+}
+
+.gameInventory.inv-bottom-center {
+  left: 50% !important;
+  bottom: 12px !important;
+  transform: translateX(-50%) !important;
+}
+
+.gameInventory.inv-bottom-right {
+  right: 12px !important;
+  bottom: 12px !important;
+}
+
+.inventorySlots {
+  flex-wrap: wrap;
+  max-width: min(70vw, 760px);
+}
+
+.gameInvSlot,
+.gameInvItem {
+  width: var(--inv-slot-size, 52px) !important;
+  height: var(--inv-slot-size, 52px) !important;
+}
+
+.gameInvItem img {
+  max-width: calc(var(--inv-slot-size, 52px) - 8px) !important;
+  max-height: calc(var(--inv-slot-size, 52px) - 8px) !important;
+}
+
+.inventoryToggle {
+  width: var(--inv-slot-size, 52px) !important;
+  height: var(--inv-slot-size, 52px) !important;
+}
+
+.inventoryToggle img {
+  max-width: calc(var(--inv-slot-size, 52px) - 8px) !important;
+  max-height: calc(var(--inv-slot-size, 52px) - 8px) !important;
+}
+
+
+/* Beta 0.7.5: inventario configurable visible */
+.inventorySettingsPanel select,
+.inventorySettingsPanel input,
+.inventorySettingsPanel textarea {
+  width: 100%;
+}
+
+.gameInventory.inv-top-left {
+  left: 12px !important;
+  top: 12px !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+}
+
+.gameInventory.inv-top-center {
+  left: 50% !important;
+  top: 12px !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translateX(-50%) !important;
+}
+
+.gameInventory.inv-top-right {
+  right: 12px !important;
+  top: 12px !important;
+  left: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+}
+
+.gameInventory.inv-bottom-left {
+  left: 12px !important;
+  bottom: 12px !important;
+  right: auto !important;
+  top: auto !important;
+  transform: none !important;
+}
+
+.gameInventory.inv-bottom-center {
+  left: 50% !important;
+  bottom: 12px !important;
+  right: auto !important;
+  top: auto !important;
+  transform: translateX(-50%) !important;
+}
+
+.gameInventory.inv-bottom-right {
+  right: 12px !important;
+  bottom: 12px !important;
+  left: auto !important;
+  top: auto !important;
+  transform: none !important;
+}
+
+.gameInvSlot,
+.gameInvItem {
+  width: var(--inv-slot-size, 72px) !important;
+  height: var(--inv-slot-size, 72px) !important;
+}
+
+.gameInvItem img,
+.inventoryToggle img {
+  max-width: calc(var(--inv-slot-size, 72px) - 8px) !important;
+  max-height: calc(var(--inv-slot-size, 72px) - 8px) !important;
+}
+
+.inventoryToggle {
+  width: var(--inv-slot-size, 72px) !important;
+  height: var(--inv-slot-size, 72px) !important;
+}
+
+
+/* Beta 0.7.6: separación escena/objeto en Matter.js */
+.physicsSceneBlock {
+  border-color: rgba(255, 202, 93, .35);
+}
+
+.physicsPropsBlock {
+  border-color: rgba(106, 194, 255, .4);
+}
+
+.physicsDebugDomain {
+  fill: rgba(255, 202, 93, .08);
+  stroke: rgba(255, 202, 93, .9);
+  stroke-width: 3;
+  stroke-dasharray: 10 6;
+  pointer-events: none;
+}
+
+
+/* Beta 0.7.7: aislamiento de arrastre editor vs Matter.js */
+.physicsDebugLayer,
+.physicsOverlay,
+.physicsEditorBody svg {
+  pointer-events: none !important;
+}
+
+.sceneObject.dragging {
+  pointer-events: auto !important;
+}
+
+
+/* Beta 0.7.8: editor real de física */
+.physicsEditor {
+  position: absolute !important;
+  left: 12px !important;
+  right: auto !important;
+  top: 58px !important;
+  bottom: 12px !important;
+  width: 360px !important;
+  z-index: 7200 !important;
+  display: grid !important;
+  grid-template-rows: auto 1fr !important;
+  background: rgba(14, 18, 24, .96) !important;
+  border: 1px solid rgba(106, 194, 255, .45) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 18px 55px rgba(0,0,0,.55) !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+}
+
+.physicsEditor.hidden {
+  display: none !important;
+}
+
+.physicsEditorHeader {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 10px !important;
+  background: rgba(0,0,0,.35) !important;
+  border-bottom: 1px solid rgba(255,255,255,.10) !important;
+}
+
+.physicsEditorHeader strong {
+  color: #8fd3ff;
+  margin-right: 8px;
+}
+
+#physicsEditorModeBadge {
+  font-size: 11px;
+  color: #111;
+  background: #8fd3ff;
+  border-radius: 999px;
+  padding: 2px 8px;
+  margin-right: 4px;
+}
+
+.physicsEditorBody {
+  overflow: auto !important;
+  padding: 12px !important;
+}
+
+.physicsEditorInspector {
+  display: grid;
+  gap: 12px;
+}
+
+.physicsSelectedInfo {
+  min-height: 58px;
+  padding: 10px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 12px;
+  background: rgba(0,0,0,.22);
+  line-height: 1.35;
+}
+
+.physicsQuickGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.physicsLegend {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.legendBox {
+  display: inline-block;
+  width: 18px;
+  height: 11px;
+  border-radius: 4px;
+  margin-right: 6px;
+  vertical-align: middle;
+  border: 1px solid currentColor;
+}
+
+.legendBox.dynamic { color: rgba(100, 190, 255, .95); background: rgba(100,190,255,.12); }
+.legendBox.static { color: rgba(220, 220, 220, .85); background: rgba(220,220,220,.10); }
+.legendBox.sensor { color: rgba(255, 210, 80, .95); background: rgba(255,210,80,.12); }
+.legendBox.domain { color: rgba(255, 202, 93, .95); background: rgba(255,202,93,.10); }
+
+.physics #physicsDebugLayer {
+  pointer-events: auto !important;
+}
+
+.physics #physicsDebugLayer .physicsDebugBody,
+.physics #physicsDebugLayer .physicsDebugPivot,
+.physics #physicsDebugLayer .physicsDebugDomain {
+  pointer-events: visiblePainted !important;
+  cursor: pointer;
+}
+
+.physicsDebugBody.selectedPhysicsBody {
+  stroke: #fff !important;
+  stroke-width: 4 !important;
+  filter: drop-shadow(0 0 6px rgba(255,255,255,.55));
+}
+
+.physics .sceneObject {
+  cursor: grab;
+}
+
+
+/* Beta 0.7.9: pathfinding + panel derecho accordion */
+.pathfindingSceneBlock,
+.pathfindingObjectBlock {
+  border-color: rgba(143, 211, 255, .35);
+  background: rgba(143, 211, 255, .045);
+}
+
+.pathfindingDebugPath {
+  pointer-events: none;
+  filter: drop-shadow(0 0 5px rgba(143,211,255,.55));
+}
+
+.accordionSection {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  margin: 8px 0;
+  background: rgba(255,255,255,.025);
+  overflow: hidden;
+}
+
+.accordionHeader {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: rgba(255,255,255,.055);
+  color: var(--accent);
+  text-align: left;
+  font-weight: 700;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.accordionHeader::before {
+  content: "▾ ";
+}
+
+.accordionSection.collapsed > .accordionHeader::before {
+  content: "▸ ";
+}
+
+.accordionBody {
+  padding: 10px;
+}
+
+.accordionSection.collapsed > .accordionBody {
+  display: none;
+}
+
+
+/* Beta 0.7.10: debug de pathfinding visible en Play */
+.play #navLayer:has(.pathfindingDebugPath) {
+  display: block !important;
+  pointer-events: none !important;
+}
+
+.play .pathfindingDebugPath {
+  display: block !important;
+  pointer-events: none !important;
+}
+
+
+/* Beta 0.7.11: click-to-move robusto en Play */
+.play {
+  cursor: crosshair;
+}
+
+.play .sceneObject.player {
+  pointer-events: none;
+}
+
+.play .sceneObject.background {
+  pointer-events: none;
+}
+
+
+/* Beta 0.7.12: aislar player/pathfinding de Matter.js */
+.play .sceneObject.player {
+  pointer-events: none !important;
+}
+
+
+/* Beta 0.7.13: capa propia para debug de pathfinding */
+#pathfindingDebugLayer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1500;
+  pointer-events: none !important;
+  overflow: visible;
+}
+
+.pathfindingDebugPath {
+  stroke: #8fd3ff;
+  stroke-width: 5;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 7px rgba(143,211,255,.8));
+}
+
+.pathfindingDebugPoint {
+  fill: #8fd3ff;
+  stroke: #06131d;
+  stroke-width: 2;
+  filter: drop-shadow(0 0 5px rgba(143,211,255,.7));
+}
+
+
+/* Beta 0.7.14: controles físicos robustos para Player */
+#propPhysicsEnabled:disabled,
+#propPathBlocker:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+
+/* Beta 0.7.15: collider obligatorio del Player + test runtime */
+#propColliderEnabled:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.playMoveTestBtn {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  z-index: 20050;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(143,211,255,.8);
+  background: rgba(10, 20, 32, .85);
+  color: #dff4ff;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.playMoveTestBtn.hidden {
+  display: none !important;
+}
+
+
+/* Beta 0.7.16: capa transparente para clic-to-move en Play */
+.playClickCatcherLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 12000;
+  background: transparent;
+  pointer-events: auto;
+  cursor: crosshair;
+}
+
+.playClickCatcherLayer.hidden {
+  display: none !important;
+}
+
+.playMoveTestBtn,
+#gameInventory,
+#messageBox,
+#splashScreen {
+  z-index: 20050 !important;
+}
+
+
+/* Beta 0.7.18: debug visual de coordenadas de clic */
+.playClickDebugMarker {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  margin-left: -11px;
+  margin-top: -11px;
+  border: 2px solid #8fd3ff;
+  border-radius: 999px;
+  background: rgba(143, 211, 255, .18);
+  box-shadow: 0 0 12px rgba(143, 211, 255, .95);
+  pointer-events: none;
+  z-index: 22000;
+}
+
+.playClickDebugMarker::after {
+  content: "";
+  position: absolute;
+  left: 9px;
+  top: -8px;
+  width: 2px;
+  height: 36px;
+  background: rgba(143, 211, 255, .8);
+}
+
+.playClickDebugMarker::before {
+  content: "";
+  position: absolute;
+  left: -8px;
+  top: 9px;
+  width: 36px;
+  height: 2px;
+  background: rgba(143, 211, 255, .8);
+}
+
+.playClickDebugMarker.hidden {
+  display: none !important;
+}
+
+
+/* Beta 0.7.19: runtime independiente del Player */
+.play .sceneObject.player[data-runtime-moved="1"] {
+  will-change: transform;
+  z-index: 5000 !important;
+}
+
+
+/* Beta 0.7.20: build de diagnóstico sin pathfinding */
+.pathfindingDebugPath,
+.pathfindingDebugPoint,
+#pathfindingDebugLayer {
+  display: none !important;
+}
+
+.sceneObject.player[data-no-pathfinding-moved="1"],
+.sceneObject.player[data-noPathfindingMoved="1"] {
+  outline: 3px solid rgba(255, 210, 80, .95);
+  filter: drop-shadow(0 0 10px rgba(255,210,80,.7));
+}
+
+.playMoveTestBtn::after {
+  content: " · sin A*";
+}
+
+
+/* Beta 0.7.22: diagnóstico DOM sin quitar módulos */
+.playDomTeleportBtn {
+  position: absolute;
+  right: 14px;
+  top: 56px;
+  z-index: 20060;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,218,80,.9);
+  background: rgba(35, 24, 5, .88);
+  color: #ffeaa0;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.playDomTeleportBtn.hidden {
+  display: none !important;
+}
+
+.sceneObject.player[data-dom-teleported="1"] {
+  outline: 4px solid #ffda50 !important;
+  filter: drop-shadow(0 0 12px rgba(255,218,80,.95)) !important;
+}
+
+
+/* Beta 0.7.23: el clic de suelo lo captura document, no la capa catcher */
+.playClickCatcherLayer {
+  pointer-events: none !important;
+}
+
+.play .sceneObject.player {
+  pointer-events: none !important;
+}
+
+
+/* Beta 0.7.24: los objetos de fondo/no interactivos no bloquean el clic de suelo */
+.play .sceneObject.background,
+.play .sceneObject.player {
+  pointer-events: none !important;
+}
+
+.play .sceneObject[data-action="none"] {
+  pointer-events: none;
+}
+
+
+/* Beta 0.7.25: depuración de capas de clic */
+.play,
+.play * {
+  cursor: default !important;
+}
+
+#playClickCatcherLayer,
+.playClickCatcherLayer {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+.playFloorButtonLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 15000;
+  background: transparent;
+  pointer-events: auto;
+  cursor: default !important;
+}
+
+.playFloorButtonLayer.hidden {
+  display: none !important;
+}
+
+.playFloorButtonLayer.debugVisible {
+  background: rgba(255, 218, 80, .08);
+  outline: 3px dashed rgba(255, 218, 80, .95);
+  outline-offset: -6px;
+}
+
+.playFloorLayerDebugBtn {
+  position: absolute;
+  right: 14px;
+  top: 98px;
+  z-index: 20080;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,218,80,.9);
+  background: rgba(35, 24, 5, .88);
+  color: #ffeaa0;
+  cursor: pointer !important;
+  pointer-events: auto;
+}
+
+.playFloorLayerDebugBtn.hidden {
+  display: none !important;
+}
+
+.playMoveTestBtn,
+.playDomTeleportBtn,
+.playFloorLayerDebugBtn {
+  pointer-events: auto !important;
+}
+
+
+/* Beta 0.7.26: floor layer oficial limpia */
+.playFloorButtonLayer {
+  background: transparent !important;
+  outline: none !important;
+  cursor: default !important;
+}
+
+.playFloorLayerDebugBtn,
+.playDomTeleportBtn {
+  display: none !important;
+}
+
+.sceneObject.player[data-floor-moved="1"] {
+  will-change: transform;
+}
+
+
+/* Beta 0.7.27: pathfinding vuelve sobre la capa oficial de suelo */
+#pathfindingDebugLayer {
+  display: block !important;
+  pointer-events: none !important;
+}
+
+.pathfindingDebugPath,
+.pathfindingDebugPoint {
+  display: block !important;
+}
+
+
+/* Beta 0.7.31: debug visual de bloqueantes de pathfinding */
+.pathfindingDebugObstacle {
+  fill: rgba(255, 90, 90, .18);
+  stroke: rgba(255, 90, 90, .95);
+  stroke-width: 3;
+  stroke-dasharray: 8 5;
+  pointer-events: none;
+}
+
+.pathfindingDebugObstacleLabel {
+  fill: #ffd7d7;
+  stroke: rgba(0,0,0,.75);
+  stroke-width: 3;
+  paint-order: stroke;
+  font-size: 14px;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+
+/* Beta 0.7.33: persistencia visual de bloqueantes */
+#propPathBlocker:checked + span,
+label:has(#propPathBlocker:checked) {
+  color: #ffd27a;
+  font-weight: 700;
+}
+
+
+/* Beta 0.7.34: puntos de ruta visibility graph */
+.visibilityDebugPoint {
+  fill: rgba(120, 255, 180, .85);
+  stroke: rgba(0, 20, 12, .9);
+  stroke-width: 2;
+  filter: drop-shadow(0 0 7px rgba(120,255,180,.85));
+  pointer-events: none;
+}
+
+
+/* Beta 0.7.35: bloqueantes sin collider usan huella automática */
+.pathfindingDebugObstacle.autoFootprint {
+  fill: rgba(255, 180, 70, .20);
+  stroke: rgba(255, 190, 80, .95);
+}
+
+.pathfindingDebugObstacle.manualCollider {
+  fill: rgba(255, 90, 90, .18);
+  stroke: rgba(255, 90, 90, .95);
+}
+
+
+/* Beta 0.7.36: la capa de suelo restaura interacción con objetos */
+.playFloorButtonLayer {
+  pointer-events: auto !important;
+}
+
+.playMoveTestBtn,
+#gameInventory,
+#messageBox,
+#splashScreen {
+  z-index: 22000 !important;
+  pointer-events: auto !important;
+}
+
+
+/* Beta 0.7.37: cursor de item de inventario sobre capa de suelo */
+#inventoryCursor {
+  z-index: 23000 !important;
+  pointer-events: none !important;
+}
+
+.usingInventoryItem #playFloorButtonLayer {
+  cursor: crosshair !important;
+}
+
+.jsErrorBox {
+  display: inline-block;
+  max-width: 48vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 4px 8px;
+  margin-left: 8px;
+  border-radius: 6px;
+  background: rgba(170, 30, 30, .92);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+}
+.jsErrorBox.hidden { display: none; }
+
+
+
+/* Beta 0.7.56: editor visual de huella de pathfinding */
+.footprintToolBtn {
+  border-color: rgba(120,255,180,.45) !important;
+}
+
+.footprintHeader {
+  border-bottom-color: rgba(120,255,180,.35);
+}
+
+.footprintViewport {
+  background:
+    linear-gradient(45deg, rgba(120,255,180,.04) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(120,255,180,.04) 25%, transparent 25%);
+  background-size: 24px 24px;
+}
+
+.footprintShape {
+  fill: rgba(120,255,180,.30);
+  stroke: rgba(120,255,180,.95);
+  stroke-width: 3;
+  stroke-dasharray: 8 5;
+  cursor: move;
+  vector-effect: non-scaling-stroke;
+}
+
+.footprintResizeHandle {
+  fill: #f6ffb8;
+  stroke: #16351f;
+  stroke-width: 2;
+  cursor: nwse-resize;
+  vector-effect: non-scaling-stroke;
+}
+
+.footprintBaseline {
+  stroke: rgba(255,255,255,.35);
+  stroke-width: 2;
+  stroke-dasharray: 6 8;
+  vector-effect: non-scaling-stroke;
+}
+
+.footprintManualColliderText {
+  fill: #dfffee;
+  stroke: rgba(0,0,0,.8);
+  stroke-width: 4;
+  paint-order: stroke;
+  font-size: 18px;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.footprintPresetBtn.active,
+#footprintToolMove.active,
+#footprintToolResize.active {
+  outline: 2px solid rgba(120,255,180,.95);
+  background: rgba(120,255,180,.16);
+}
+
+
+/* Beta 0.7.58: cálculo automático de tamaño de frame en spritesheets */
+.spriteAutoFrameActions {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0 12px;
+}
+
+.spriteAutoFrameActions button {
+  width: 100%;
+}
+
+#spriteAutoFrameStatus.ok {
+  color: #9be7bd;
+}
+
+#spriteAutoFrameStatus.warning {
+  color: #ffd27a;
+}
+
+
+/* Beta 0.7.59: gestor de assets de imagen */
+.assetManagerActions {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.imageAssetCard {
+  cursor: pointer;
+  position: relative;
+  gap: 4px;
+}
+
+.imageAssetCard.selected {
+  outline: 2px solid rgba(120, 190, 255, .95);
+  box-shadow: 0 0 0 3px rgba(120, 190, 255, .18);
+}
+
+.assetMeta {
+  font-size: 10px;
+  line-height: 1.15;
+  opacity: .82;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.assetCardActions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 3px;
+  width: 100%;
+}
+
+.assetCardActions button {
+  font-size: 10px;
+  padding: 3px 4px;
+}
+
+
+/* Beta 0.7.60 responsive toolbar */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.app,
+.workspace,
+.toolbar,
+.topToolbarGroups,
+.modeToolGroup,
+.toolbarGroup {
+  min-width: 0;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  overflow: visible;
+  max-width: 100%;
+}
+
+.topToolbarGroups {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+}
+
+.toolbarGroup,
+.toolbarGroupBox,
+.modeToolGroup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+}
+
+.toolbar button,
+.iconToolBtn,
+.modeIconBtn {
+  flex: 0 0 auto;
+  max-width: 100%;
+}
+
+#statusText {
+  flex: 1 1 220px;
+  min-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .toolbar {
+    gap: 4px;
+    padding: 4px;
+  }
+
+  .topToolbarGroups,
+  .toolbarGroup,
+  .toolbarGroupBox {
+    gap: 3px;
+  }
+
+  .iconToolBtn,
+  .modeIconBtn,
+  .zoomResetBtn,
+  .toolbar button {
+    min-width: 28px;
+    min-height: 28px;
+    padding: 3px 5px;
+    font-size: 12px;
+  }
+
+  #statusText {
+    flex-basis: 100%;
+    order: 99;
+  }
+}
+
+@media (max-width: 640px) {
+  .toolbar {
+    align-items: flex-start;
+  }
+
+  .iconToolBtn,
+  .modeIconBtn,
+  .zoomResetBtn {
+    min-width: 26px;
+    min-height: 26px;
+    padding: 2px 4px;
+  }
+
+  .zoomControlGroup {
+    max-width: 120px;
+  }
+}
+
+
+/* Beta 0.7.61: toolbar no invasiva */
+.workspace {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.toolbar {
+  flex: 0 0 auto !important;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  gap: 6px !important;
+  max-width: 100% !important;
+  min-height: 42px;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scrollbar-width: thin;
+  position: relative;
+  z-index: 50;
+}
+
+.topToolbarGroups,
+.modeToolGroup,
+.toolbarGroup,
+.toolbarGroupBox {
+  flex: 0 0 auto !important;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  gap: 4px !important;
+  white-space: nowrap !important;
+}
+
+.toolbar button,
+.iconToolBtn,
+.modeIconBtn,
+.zoomResetBtn {
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
+}
+
+#stageWrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+#statusText {
+  flex: 1 0 160px !important;
+  min-width: 120px !important;
+  max-width: 360px;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+@media (max-width: 900px) {
+  .toolbar {
+    min-height: 38px;
+    padding-bottom: 3px;
+  }
+
+  .iconToolBtn,
+  .modeIconBtn,
+  .zoomResetBtn,
+  .toolbar button {
+    min-width: 26px !important;
+    min-height: 26px !important;
+    padding: 2px 4px !important;
+    font-size: 12px !important;
+  }
+
+  #statusText {
+    flex: 0 0 140px !important;
+    max-width: 180px;
+  }
+}
+
+
+/* Beta 0.7.65: botón único de ajuste de frame */
+.primarySpriteFrameBtn {
+  font-weight: 700;
+  border-color: rgba(120, 190, 255, .8) !important;
+}
+
+.secondarySpriteFrameBtn {
+  opacity: .85;
+}

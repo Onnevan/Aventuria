@@ -1,0 +1,27 @@
+﻿# OS / editor
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.tmp
+*.temp
+*.log
+
+# Local dependency folders, if added later
+node_modules/
+dist/
+build/
+.cache/
+.vscode/
+.idea/
+
+# Local/private exports and backups
+*.bak
+*.backup
+*.old
+*.zip
+*.rar
+*.7z
+
+# Optional large local captures
+screenshots/
+recordings/
