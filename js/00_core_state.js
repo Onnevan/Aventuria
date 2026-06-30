@@ -81,3 +81,5 @@ const els = {
   nodeCanvas: $("nodeCanvas"),
   wireLayer: $("wireLayer")
 };
+
+// core ready
