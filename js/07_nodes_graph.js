@@ -1918,6 +1918,15 @@ function safeFileBaseName(name = "aventuria_proyecto") {
     .toLowerCase() || "aventuria_proyecto";
 }
 
+function compactProjectForStorage(project) {
+  const copy = deepClone(project);
+  const images = copy.assets?.images || [];
+  images.forEach(asset => {
+    if (asset?.src && asset.src === asset.dataUrl) delete asset.src;
+  });
+  return copy;
+}
+
 function makeAvePackage() {
   return {
     app: "AventurIA",
@@ -1925,7 +1934,7 @@ function makeAvePackage() {
     extension: "ave",
     version: AVENTURIA_FILE_VERSION,
     savedAt: new Date().toISOString(),
-    project: state.project
+    project: compactProjectForStorage(state.project)
   };
 }
 
@@ -2054,7 +2063,7 @@ async function saveProjectAve({ saveAs = false } = {}) {
 
 async function exportProjectJson() {
   if (!(await prepareProjectForDisk())) return;
-  const text = JSON.stringify(state.project, null, 2);
+  const text = JSON.stringify(compactProjectForStorage(state.project), null, 2);
   const filename = `${safeFileBaseName(state.project.name)}.json`;
   downloadTextFile(filename, text, "application/json");
   $("statusText").textContent = "Proyecto exportado como JSON.";
@@ -2194,7 +2203,7 @@ async function saveToDb() {
   }
   const db = await openDb();
   const tx = db.transaction(DB_STORE, "readwrite");
-  tx.objectStore(DB_STORE).put(state.project, DB_KEY);
+  tx.objectStore(DB_STORE).put(compactProjectForStorage(state.project), DB_KEY);
   tx.oncomplete = () => showMessage("Proyecto guardado en BD local.");
   tx.onerror = () => showMessage("Error al guardar en BD local.");
 }
