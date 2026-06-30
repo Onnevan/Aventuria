@@ -51,19 +51,8 @@ function stagePointDebugText(p) {
 }
 
 function showPlayClickMarker(point) {
-  let marker = $("playClickDebugMarker");
-  if (!marker) {
-    marker = document.createElement("div");
-    marker.id = "playClickDebugMarker";
-    marker.className = "playClickDebugMarker";
-    els.stage?.appendChild(marker);
-  }
-
-  marker.style.left = `${point.x}px`;
-  marker.style.top = `${point.y}px`;
-  marker.classList.remove("hidden");
-  clearTimeout(marker._hideTimer);
-  marker._hideTimer = setTimeout(() => marker.classList.add("hidden"), 1600);
+  // Marcador visual de debug desactivado.
+  // Se conserva la función para no tocar las llamadas existentes.
 }
 
 
