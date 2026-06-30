@@ -1904,6 +1904,10 @@ function executeNode(node, context = {}) {
 
 const AVENTURIA_FILE_VERSION = 1;
 let lastSavedProjectHandle = null;
+const BUNDLED_PROJECT_PATHS = [
+  "projects/default.ave",
+  "projects/default.json"
+];
 
 function safeFileBaseName(name = "aventuria_proyecto") {
   return String(name || "aventuria_proyecto")
@@ -1931,6 +1935,49 @@ function unwrapProjectFile(data) {
   return data;
 }
 
+
+function applyLoadedProject(rawProject, sourceLabel = "proyecto") {
+  state.editorSnapshot = null;
+  stopAnimationLoop();
+  state.project = normalizeProject(unwrapProjectFile(rawProject));
+  state.selectedSceneId = state.project.startSceneId || state.project.scenes[0]?.id || null;
+  clearSelection();
+  state.inventory = [];
+  state.runtimeStates = {};
+  state.spatialTriggerStates = {};
+  state.spatialTriggerBlocked = {};
+  state.selectedInventoryItemId = null;
+  state.inventoryOpen = false;
+  lastSavedProjectHandle = null;
+  setMode("editor");
+  updateProjectFileInfo(sourceLabel);
+  $("statusText").textContent = sourceLabel;
+}
+
+async function fetchBundledProjectData() {
+  for (const path of BUNDLED_PROJECT_PATHS) {
+    try {
+      const res = await fetch(path, { cache: "no-store" });
+      if (!res.ok) continue;
+      return { path, data: await res.json() };
+    } catch (err) {
+      // Puede que ese archivo no exista; probamos el siguiente candidato.
+    }
+  }
+  return null;
+}
+
+async function loadBundledProject({ silent = false } = {}) {
+  const bundled = await fetchBundledProjectData();
+  if (!bundled) {
+    if (!silent) showMessage("No hay proyecto incluido. Añade projects/default.ave o projects/default.json al repo.");
+    return false;
+  }
+
+  applyLoadedProject(bundled.data, `Proyecto incluido cargado: ${bundled.path}`);
+  showMessage("Proyecto incluido cargado.");
+  return true;
+}
 async function prepareProjectForDisk() {
   if (state.mode === "play") {
     alert("Para guardar, pulsa Stop o vuelve a Editor. El modo Play es solo una evaluación temporal.");
@@ -2019,26 +2066,11 @@ async function saveProjectJson() {
 }
 
 function loadProject(file) {
-  state.editorSnapshot = null;
-  stopAnimationLoop();
   const reader = new FileReader();
   reader.onload = () => {
     try {
       const raw = JSON.parse(reader.result);
-      state.project = normalizeProject(unwrapProjectFile(raw));
-      state.selectedSceneId = state.project.scenes[0]?.id || null;
-      clearSelection();
-      state.inventory = [];
-      state.runtimeStates = {};
-      state.spatialTriggerStates = {};
-      state.spatialTriggerBlocked = {};
-      state.spatialTriggerBlocked = {};
-      state.selectedInventoryItemId = null;
-      state.inventoryOpen = false;
-      lastSavedProjectHandle = null;
-      setMode("editor");
-      updateProjectFileInfo(`Cargado: ${file.name}`);
-      $("statusText").textContent = `Proyecto cargado: ${file.name}`;
+      applyLoadedProject(raw, `Proyecto cargado: ${file.name}`);
     } catch (err) {
       console.error(err);
       alert("No se pudo cargar el proyecto. Comprueba que sea un .ave o .json válido.");
@@ -2046,7 +2078,6 @@ function loadProject(file) {
   };
   reader.readAsText(file);
 }
-
 function readFilesAsAssets(files, kind) {
   const fileList = [...(files || [])];
   if (!fileList.length) return;
@@ -2172,20 +2203,18 @@ async function loadFromDb() {
   const db = await openDb();
   const tx = db.transaction(DB_STORE, "readonly");
   const req = tx.objectStore(DB_STORE).get(DB_KEY);
-  req.onsuccess = () => {
-    if (!req.result) return showMessage("No hay proyecto guardado en BD local.");
-    state.project = normalizeProject(req.result);
-    state.selectedSceneId = state.project.startSceneId || state.project.scenes[0]?.id || null;
-    clearSelection();
-    state.inventory = [];
-    lastSavedProjectHandle = null;
-    updateProjectFileInfo?.("Proyecto cargado desde BD local del navegador.");
-    setMode("editor");
+  req.onsuccess = async () => {
+    if (!req.result) {
+      const loadedBundled = await loadBundledProject({ silent: true });
+      if (!loadedBundled) showMessage("No hay proyecto guardado en BD local ni proyecto incluido.");
+      return;
+    }
+
+    applyLoadedProject(req.result, "Proyecto cargado desde BD local del navegador.");
     showMessage("Proyecto cargado desde BD local.");
   };
   req.onerror = () => showMessage("Error al cargar BD local.");
 }
-
 
 function mouseButtonName(button) {
   if (button === 0) return "mouse:left";

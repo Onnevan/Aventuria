@@ -47,6 +47,7 @@ function bindUI() {
     alert("Publicar todavía no está implementado. Aquí irá la exportación jugable/publicable del proyecto.");
   };
   $("loadProjectBtn").onclick = () => $("loadProjectInput").click();
+  if ($("loadBundledProjectBtn")) $("loadBundledProjectBtn").onclick = () => loadBundledProject();
   if ($("saveLocalDbBtn")) $("saveLocalDbBtn").onclick = () => {
     if (!confirm("¿Guardar este proyecto localmente en este navegador? Se sobrescribirá la copia local anterior.")) return;
     saveToDb();
