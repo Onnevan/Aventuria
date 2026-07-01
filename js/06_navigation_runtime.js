@@ -2889,6 +2889,7 @@ function deepClone(data) {
 function beginPlaySession() {
   if (typeof syncSpriteFrameFromPropertiesPanel === "function") syncSpriteFrameFromPropertiesPanel();
   if (typeof syncPathBlockerFromPropertiesPanel === "function") syncPathBlockerFromPropertiesPanel();
+  if (typeof syncObjectPhysicsFromPropertiesPanel === "function") syncObjectPhysicsFromPropertiesPanel();
   if (typeof applyPathBlockerMemory === "function") applyPathBlockerMemory();
 
   const selected = state.project?.scenes?.find(s => s.id === state.selectedSceneId);

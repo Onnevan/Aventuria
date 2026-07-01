@@ -898,7 +898,14 @@ function renderStage() {
 
         div.onclick = (e) => {
           if ((state.mode === "editor" || state.mode === "physics") && state.tool !== "select" && state.tool !== "physics") return;
-          if (!pointInObjectCollider(stagePoint(e), obj)) return;
+          const sp = stagePoint(e);
+          if (!pointInObjectCollider(sp, obj)) {
+            if ((state.mode === "editor" || state.mode === "physics") && obj.collider?.enabled === false) {
+              const sw = obj.width * (obj.scale || 1);
+              const sh = obj.height * (obj.scale || 1);
+              if (!(sp.x >= obj.x && sp.x <= obj.x + sw && sp.y >= obj.y && sp.y <= obj.y + sh)) return;
+            } else return;
+          }
           e.stopPropagation();
           clearSelection();
           state.selectedPanel = "object";
