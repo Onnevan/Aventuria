@@ -27,56 +27,45 @@ function objectScreenPosition(obj) {
 }
 
 
-const OCCLUSION_Z_DEPTH_PRECISION = 1000;
-
 function fixedObjectZIndex(obj) {
   return obj?.type === "background" ? 1 + Number(obj.z ?? 0) : 100 + Number(obj?.z ?? 0);
 }
 
-function computeObjectDepthY(obj) {
+function computeOcclusionDepth(obj) {
   if (!obj) return 0;
   const occ = typeof ensureOcclusionConfig === "function" ? ensureOcclusionConfig(obj) : (obj.occlusion || {});
-  const offset = Number(occ.offsetY || 0);
-  const scale = Number(obj.scale || 1);
-
-  if (obj.type === "player") {
-    return Number(obj.y || 0) + Number(obj.height || 0) * scale + offset;
-  }
-
   if (!occ.enabled) return fixedObjectZIndex(obj);
 
-  if (occ.mode === "footprint" && typeof objectHasUsableFootprint === "function" && objectHasUsableFootprint(obj)) {
-    const bounds = typeof getPathFootprintWorldBounds === "function" ? getPathFootprintWorldBounds(obj) : null;
-    if (bounds) {
-      if (occ.depthMode === "behind") return bounds.top + offset;
-      return bounds.bottom + offset;
-    }
+  const scale = Number(obj.scale || 1);
+
+  // Player depth = midpoint Y of bounding box
+  if (obj.type === "player") {
+    return Number(obj.y || 0) + Number(obj.height || 0) * scale / 2 + Number(occ.offsetY || 0);
   }
 
-  return Number(obj.y || 0) + Number(obj.height || 0) * scale + offset;
+  // Object depth = midpoint Y of footprint (or bounds fallback)
+  let bounds = null;
+  if (occ.mode === "footprint" && typeof objectHasUsableFootprint === "function" && objectHasUsableFootprint(obj)) {
+    bounds = typeof getPathFootprintWorldBounds === "function" ? getPathFootprintWorldBounds(obj) : null;
+  }
+  if (!bounds) {
+    const cx = Number(obj.x || 0) + Number(obj.width || 0) * scale / 2;
+    const cy = Number(obj.y || 0) + Number(obj.height || 0) * scale / 2;
+    return cy + Number(occ.offsetY || 0);
+  }
+  return (bounds.top + bounds.bottom) / 2 + Number(occ.offsetY || 0);
 }
 
 function computeVisualDepthZ(obj) {
   if (!obj) return 0;
-  const depthY = computeObjectDepthY(obj);
+  const depth = computeOcclusionDepth(obj);
   const occ = obj.occlusion || {};
 
-  if (obj.type === "player") {
-    return Math.round(depthY);
-  }
+  // Without occlusion: fixed z-index
+  if (!occ.enabled || obj.type === "background") return fixedObjectZIndex(obj);
 
-  if (!occ.enabled) return fixedObjectZIndex(obj);
-
-  if (occ.onlyPlayers) {
-    // Composite: manual z drives primary layer, depth Y is sub-layer
-    // This prevents prop-to-prop flickering while letting the player
-    // sort correctly based on Y position
-    const baseZ = Math.max(0, Number(obj.z ?? 0));
-    return baseZ * OCCLUSION_Z_RANGE + Math.round(depthY % OCCLUSION_Z_RANGE);
-  }
-
-  // Full dynamic: depth Y dominates, manual z is tiebreaker
-  return Math.round(depthY * OCCLUSION_Z_DEPTH_PRECISION) + Math.max(0, Number(obj.z ?? 0));
+  // With occlusion: depth is the primary sort key, manual z is tiebreaker
+  return Math.round(depth * 100) + Math.max(0, Number(obj.z ?? 0));
 }
 
 function objectTransform(obj) {

@@ -755,7 +755,7 @@
 
           <div class="props occlusionPropsBlock" id="occlusionPropsBlock">
             <h3>Occlusion / profundidad</h3>
-            <label class="check"><input id="propOcclusionEnabled" type="checkbox" /> Usar orden dinamico</label>
+            <label class="check"><input id="propOcclusionEnabled" type="checkbox" /> Orden dinámico por Y</label>
             <div class="grid2">
               <label>Referencia
                 <select id="propOcclusionMode">
@@ -763,19 +763,9 @@
                   <option value="bounds">Caja del objeto</option>
                 </select>
               </label>
-              <label>Comportamiento
-                <select id="propOcclusionDepthMode">
-                  <option value="behind">Detrás (objeto tapa al player)</option>
-                  <option value="inFront">Delante (player tapa al objeto)</option>
-                  <option value="custom">Personalizado</option>
-                </select>
-              </label>
-            </div>
-            <div class="grid2">
               <label>Offset Y <input id="propOcclusionOffsetY" type="number" step="1" /></label>
-              <label class="check"><input id="propOcclusionOnlyPlayers" type="checkbox" checked /> Solo afecta al player</label>
             </div>
-            <p class="hint">"Detrás" usa el borde superior de la huella (objeto tapa al player). "Delante" usa el borde inferior (player tapa al objeto). Usa la huella de pathfinding como referencia de suelo; si no hay huella, usa la caja del objeto.</p>
+            <p class="hint">Compara el punto medio del player contra el punto medio de la huella. Si el player está más abajo, se renderiza delante; si está más arriba, detrás. Usa la huella de pathfinding como referencia de suelo; si no hay huella, usa la caja del objeto.</p>
           </div>
 
           <div class="props colliderPropsBlock" id="colliderPropsBlock">
