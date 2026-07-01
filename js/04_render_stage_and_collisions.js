@@ -33,6 +33,39 @@ function objectTransform(obj) {
   const sc = objectEffectiveScale(obj);
   return `translate3d(${p.x}px, ${p.y}px, 0) scale(${sc * flip}, ${sc}) rotate(${objectEffectiveRotation(obj)}deg)`;
 }
+function fixedObjectZIndex(obj) {
+  return obj?.type === "background" ? 1 + Number(obj.z ?? 0) : 100 + Number(obj?.z ?? 0);
+}
+
+function objectFootprintDepthTop(obj) {
+  if (!obj || obj.type === "background") return null;
+  if (typeof objectPathFootprintRect !== "function") return null;
+  const rect = objectPathFootprintRect(obj, 0);
+  if (!rect) return null;
+  const top = Number(rect.y || 0);
+  return Number.isFinite(top) ? top : null;
+}
+
+function computeObjectDepthY(obj) {
+  if (!obj) return 0;
+  if (obj.type === "background") return fixedObjectZIndex(obj);
+
+  const scale = Number(obj.scale || 1);
+  if (obj.type === "player") {
+    return Number(obj.y || 0) + Number(obj.height || 0) * scale;
+  }
+
+  if (obj.pathBlocker === true) {
+    const footprintTop = objectFootprintDepthTop(obj);
+    if (footprintTop !== null) return footprintTop;
+  }
+
+  return Number(obj.y || 0) + Number(obj.height || 0) * scale;
+}
+
+function computeVisualDepthZ(obj) {
+  return Math.round(computeObjectDepthY(obj));
+}
 
 function spriteBackgroundPosition(obj) {
   if (!obj.sprite?.enabled) return null;
@@ -49,6 +82,7 @@ function updateObjectElement(obj) {
   const el = els.stage.querySelector(`[data-id="${obj.id}"]`);
   if (!el) return;
   el.style.transform = objectTransform(obj);
+  el.style.zIndex = String(computeVisualDepthZ(obj));
   const bgPos = spriteBackgroundPosition(obj);
   if (bgPos) el.style.backgroundPosition = bgPos;
 }
@@ -806,7 +840,7 @@ function renderStage() {
     div.dataset.id = obj.id;
     div.style.width = `${obj.width}px`;
     div.style.height = `${obj.height}px`;
-    div.style.zIndex = obj.type === "background" ? 1 + (obj.z ?? 0) : 100 + (obj.z ?? 0);
+    div.style.zIndex = String(computeVisualDepthZ(obj));
 
     div.style.transform = objectTransform(obj);
 

@@ -48,6 +48,38 @@ function syncPathBlockerFromPropertiesPanel() {
 }
 
 
+function syncObjectPhysicsFromPropertiesPanel() {
+  const obj = selectedObject?.();
+  const enabledEl = $("propPhysicsEnabled");
+  if (!obj || !enabledEl || typeof normalizeObjectPhysics !== "function") return false;
+
+  const ph = normalizeObjectPhysics(obj);
+  if (obj.type === "player" && !obj.physicsAsMatterBody) {
+    ph.enabled = false;
+    enabledEl.checked = false;
+    return true;
+  }
+
+  ph.enabled = enabledEl.checked === true;
+
+  [
+    ["propPhysicsBodyType", "bodyType", "value"],
+    ["propPhysicsShape", "shape", "value"],
+    ["propPhysicsMass", "mass", "number"],
+    ["propPhysicsDensity", "density", "number"],
+    ["propPhysicsFriction", "friction", "number"],
+    ["propPhysicsRestitution", "restitution", "number"],
+    ["propPhysicsLockRotation", "lockRotation", "checked"],
+    ["propPhysicsStartSleeping", "startSleeping", "checked"]
+  ].forEach(([id, field, mode]) => {
+    const el = $(id);
+    if (!el) return;
+    ph[field] = mode === "checked" ? el.checked === true : (mode === "number" ? Number(el.value) : el.value);
+  });
+
+  normalizeObjectPhysics(obj);
+  return true;
+}
 function updateWalkAnimationHint(obj) {
   const status = $("clipEditorStatus");
   if (!status || !obj?.sprite) return;
