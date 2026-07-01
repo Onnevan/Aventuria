@@ -193,6 +193,35 @@ function normalizeObjectPhysics(obj) {
 
 
 
+function defaultObjectOcclusion(obj = {}) {
+  return {
+    enabled: obj.type !== "background",
+    mode: "footprint",
+    depthMode: "footprintBottom",
+    offsetY: 0,
+    onlyPlayers: true
+  };
+}
+
+function normalizeObjectOcclusion(obj) {
+  if (!obj) return defaultObjectOcclusion();
+  const d = defaultObjectOcclusion(obj);
+  obj.occlusion ??= {};
+  Object.keys(d).forEach(k => {
+    if (obj.occlusion[k] === undefined || obj.occlusion[k] === null) obj.occlusion[k] = d[k];
+  });
+  obj.occlusion.enabled = obj.type === "background" ? false : obj.occlusion.enabled !== false;
+  obj.occlusion.mode = ["footprint", "bounds"].includes(obj.occlusion.mode) ? obj.occlusion.mode : d.mode;
+  obj.occlusion.depthMode = ["footprintBottom", "footprintTop", "custom"].includes(obj.occlusion.depthMode) ? obj.occlusion.depthMode : d.depthMode;
+  obj.occlusion.offsetY = Number(obj.occlusion.offsetY) || 0;
+  obj.occlusion.onlyPlayers = obj.occlusion.onlyPlayers !== false;
+  return obj.occlusion;
+}
+
+function ensureOcclusionConfig(obj) {
+  return normalizeObjectOcclusion(obj);
+}
+
 function defaultPathfindingSettings() {
   return {
     enabled: true,
@@ -261,6 +290,26 @@ function objectPathFootprintRect(obj, padding = 0) {
     shape: fp.shape || "ellipse",
     source: "pathFootprint"
   };
+}
+
+function getPathFootprintWorldBounds(obj) {
+  const rect = typeof objectPathFootprintRect === "function" ? objectPathFootprintRect(obj, 0) : null;
+  if (!rect) return null;
+  return {
+    left: rect.x,
+    top: rect.y,
+    right: rect.x + rect.width,
+    bottom: rect.y + rect.height,
+    width: rect.width,
+    height: rect.height,
+    shape: rect.shape,
+    source: rect.source
+  };
+}
+
+function objectHasUsableFootprint(obj) {
+  const fp = obj ? normalizePathFootprint(obj) : null;
+  return !!(fp?.enabled && Number(fp.width || 0) > 0 && Number(fp.height || 0) > 0);
 }
 
 function pointInObjectPathFootprint(point, obj, padding = 0) {
@@ -343,6 +392,21 @@ function normalizeAdventurePlayerControl(obj) {
 }
 
 
+
+function normalizeParallaxLayer(value) {
+  const n = Number(value);
+  if (n <= -1) return -1;
+  if (n >= 1) return 1;
+  return 0;
+}
+
+function normalizeSceneParallaxLayers(scene) {
+  if (!scene?.objects) return scene;
+  scene.objects.forEach(o => {
+    o.parallaxLayer = normalizeParallaxLayer(o.parallaxLayer);
+  });
+  return scene;
+}
 
 function makeMinimalScene(name = "Escena 1") {
   return {
@@ -599,7 +663,9 @@ function makePathfindingLabScene(project) {
     useItemFailMessage: "Eso no funciona.",
     initialState: "default",
     state: "default",
-    parallax: { enabled: data.type === "background" ? false : false, x: 0, y: 0 },
+    parallaxLayer: 0,
+    parallax: { enabled: false, x: 0, y: 0 },
+    occlusion: defaultObjectOcclusion({ type: data.type }),
     bgResize: data.type === "background" ? "cover" : "cover",
     autoFlipX: data.type === "player",
     facing: 1,
@@ -778,6 +844,7 @@ function makeComplexPathfindingLabScene(project) {
     initialState: "default",
     state: "default",
     parallax: { enabled: false, x: 0, y: 0 },
+    occlusion: defaultObjectOcclusion({ type: data.type }),
     bgResize: data.type === "background" ? "cover" : "cover",
     autoFlipX: data.type === "player",
     facing: 1,
@@ -1164,7 +1231,8 @@ function normalizeProject(project) {
       o.useItemFailMessage ??= "Eso no funciona.";
       o.action ??= "none";
       o.audioId ??= "";
-      o.parallax ??= { enabled: false, x: 0.05, y: 0 };
+      o.parallaxLayer = typeof normalizeParallaxLayer === "function" ? normalizeParallaxLayer(o.parallaxLayer) : 0;
+      o.parallax ??= { enabled: false, x: 0, y: 0 };
       o.bgResize ??= "cover";
       o.autoFlipX ??= o.type === "player";
       o.facing ??= 1;
@@ -1179,12 +1247,14 @@ function normalizeProject(project) {
       o.inventoryKey ??= o.inventorySourceId || o.id;
       normalizeObjectStates(o);
       normalizeObjectPhysics(o);
+      normalizeObjectOcclusion(o);
       o.collider ??= defaultColliderForObject(o);
       normalizePathFootprint(o);
       normalizeAdventurePlayerControl(o);
       o.transformClips ??= [];
       o.transformClips.forEach(c => normalizeTransformClip(o, c));
     });
+    normalizeSceneParallaxLayers(scene);
     syncScenePathfindingFromPlayer(scene);
   });
   if (!project.startSceneId || !project.scenes.some(s => s.id === project.startSceneId)) {

@@ -12,17 +12,12 @@ function objectScreenPosition(obj) {
 
   if (state.mode === "play") {
     const scene = currentScene();
+    const cam = cameraOffsetFromPlayer();
+    const strength = Number(scene?.parallaxStrength ?? 0);
+    const layer = typeof normalizeParallaxLayer === "function" ? normalizeParallaxLayer(obj.parallaxLayer) : 0;
+    const factor = parallaxLayerMultiplier(layer) * strength;
 
-    // El Player de aventura se mueve en coordenadas de escena.
-    // No debe recibir parallax/cámara sobre sí mismo, porque puede parecer inmóvil.
-    if (obj.type === "player") return { x: px, y: py };
-
-    const cameraEnabled = scene?.camera?.enabled === true;
-    if (cameraEnabled) {
-      const cam = cameraOffsetFromPlayer();
-      const strength = Number(scene?.parallaxStrength ?? 0.1);
-      const layer = Number(obj.parallaxLayer ?? 0);
-      const factor = parallaxLayerMultiplier(layer) * strength;
+    if (factor) {
       px += cam.x * factor;
       py += cam.y * factor;
     }
@@ -31,6 +26,37 @@ function objectScreenPosition(obj) {
   return { x: px, y: py };
 }
 
+
+function fixedObjectZIndex(obj) {
+  return obj?.type === "background" ? 1 + Number(obj.z ?? 0) : 100 + Number(obj?.z ?? 0);
+}
+
+function computeObjectDepthY(obj) {
+  if (!obj) return 0;
+  const occ = typeof ensureOcclusionConfig === "function" ? ensureOcclusionConfig(obj) : (obj.occlusion || {});
+  const offset = Number(occ.offsetY || 0);
+  const scale = Number(obj.scale || 1);
+
+  if (obj.type === "player") {
+    return Number(obj.y || 0) + Number(obj.height || 0) * scale + offset;
+  }
+
+  if (!occ.enabled) return fixedObjectZIndex(obj);
+
+  if (occ.mode === "footprint" && typeof objectHasUsableFootprint === "function" && objectHasUsableFootprint(obj)) {
+    const bounds = typeof getPathFootprintWorldBounds === "function" ? getPathFootprintWorldBounds(obj) : null;
+    if (bounds) {
+      if (occ.depthMode === "footprintTop") return bounds.top + offset;
+      return bounds.bottom + offset;
+    }
+  }
+
+  return Number(obj.y || 0) + Number(obj.height || 0) * scale + offset;
+}
+
+function computeVisualDepthZ(obj) {
+  return Math.round(computeObjectDepthY(obj));
+}
 
 function objectTransform(obj) {
   const p = objectScreenPosition(obj);
@@ -54,6 +80,7 @@ function updateObjectElement(obj) {
   const el = els.stage.querySelector(`[data-id="${obj.id}"]`);
   if (!el) return;
   el.style.transform = objectTransform(obj);
+  el.style.zIndex = String(computeVisualDepthZ(obj));
   const bgPos = spriteBackgroundPosition(obj);
   if (bgPos) el.style.backgroundPosition = bgPos;
 }
@@ -658,28 +685,17 @@ function ensurePlayMoveTestButton() {
 
 
 function ensurePlayClickCatcherLayer() {
-  let layer = $("playClickCatcherLayer");
-  if (!layer) {
-    layer = document.createElement("div");
-    layer.id = "playClickCatcherLayer";
-    layer.className = "playClickCatcherLayer hidden";
-  }
-  layer.classList.toggle("hidden", state.mode !== "play");
-  if (els.stage && layer.parentNode !== els.stage) els.stage.appendChild(layer);
-  return layer;
+  const layer = $("playClickCatcherLayer");
+  if (layer) layer.remove();
+  return null;
 }
 
 
 
 function ensurePlayClickDebugMarker() {
-  let marker = $("playClickDebugMarker");
-  if (!marker) {
-    marker = document.createElement("div");
-    marker.id = "playClickDebugMarker";
-    marker.className = "playClickDebugMarker hidden";
-  }
-  if (els.stage && marker.parentNode !== els.stage) els.stage.appendChild(marker);
-  return marker;
+  const marker = $("playClickDebugMarker");
+  if (marker) marker.remove();
+  return null;
 }
 
 
@@ -822,14 +838,7 @@ function renderStage() {
     div.dataset.id = obj.id;
     div.style.width = `${obj.width}px`;
     div.style.height = `${obj.height}px`;
-    div.style.zIndex = obj.type === "background" ? 1 + (obj.z ?? 0) : 100 + (obj.z ?? 0);
-
-    let px = obj.x;
-    let py = obj.y;
-    if (obj.type === "background" && obj.parallax?.enabled && state.mode === "play") {
-      px -= cam.x * Number(obj.parallax.x || 0);
-      py -= cam.y * Number(obj.parallax.y || 0);
-    }
+    div.style.zIndex = String(computeVisualDepthZ(obj));
 
     div.style.transform = objectTransform(obj);
 
@@ -837,7 +846,7 @@ function renderStage() {
     const spriteApplied = applySpriteBackground(div, obj, asset);
     if (!spriteApplied && asset?.dataUrl) div.style.backgroundImage = `url(${asset.dataUrl})`;
 
-    if (state.mode === "editor" || state.mode === "animations" || state.mode === "nodes" || state.mode === "mechanisms" || state.mode === "physics") {
+    if (state.mode === "editor" || state.mode === "animations" || state.mode === "nodes" || state.mode === "mechanisms" || state.mode === "physics" || (state.mode === "play" && obj.collider?.visible)) {
       drawColliderOverlay(div, obj);
     }
 
@@ -1123,6 +1132,22 @@ function deleteSelectedZonePoint() {
 }
 
 
+function renameObjectFromOutliner(obj) {
+  if (!obj) return;
+  const nextName = prompt("Nuevo nombre del objeto:", obj.name || "");
+  if (nextName === null) return;
+  const cleanName = nextName.trim();
+  if (!cleanName) {
+    showMessage?.("El nombre del objeto no puede estar vacio.");
+    return;
+  }
+  obj.name = cleanName;
+  renderStage();
+  renderOutliner();
+  renderProperties();
+  showMessage?.(`Objeto renombrado: ${cleanName}`);
+}
+
 function renderOutliner() {
   const scene = currentScene();
   els.objectList.innerHTML = "";
@@ -1158,6 +1183,21 @@ function renderOutliner() {
     const actions = document.createElement("span");
     actions.className = "outlinerActions";
 
+    const renameBtn = document.createElement("button");
+    renameBtn.type = "button";
+    renameBtn.className = "outlinerIconBtn";
+    renameBtn.title = "Renombrar";
+    renameBtn.setAttribute("aria-label", `Renombrar ${obj.name}`);
+    renameBtn.textContent = "Ren";
+    renameBtn.onclick = e => {
+      e.preventDefault();
+      e.stopPropagation();
+      clearSelection();
+      state.selectedPanel = "object";
+      state.selectedObjectId = obj.id;
+      renameObjectFromOutliner(obj);
+    };
+
     const copyBtn = document.createElement("button");
     copyBtn.type = "button";
     copyBtn.className = "outlinerIconBtn";
@@ -1182,6 +1222,7 @@ function renderOutliner() {
       deleteObjectById(obj.id);
     };
 
+    actions.appendChild(renameBtn);
     actions.appendChild(copyBtn);
     actions.appendChild(deleteBtn);
     li.appendChild(actions);

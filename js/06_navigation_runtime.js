@@ -658,6 +658,7 @@ function setPlayerDomTransformDirect(player, label = "player") {
     const flip = player.facing === -1 ? -1 : 1;
     const sc = Number(player.scale || 1);
     el.style.transform = `translate3d(${Number(player.x || 0)}px, ${Number(player.y || 0)}px, 0) scale(${sc * flip}, ${sc}) rotate(${Number(player.rotation || 0)}deg)`;
+    if (typeof computeVisualDepthZ === "function") el.style.zIndex = String(computeVisualDepthZ(player));
     el.dataset.runtimeMoved = "1";
   }
   if ($("statusText")) $("statusText").textContent = `${label}: player ${Math.round(player.x)},${Math.round(player.y)}`;
@@ -712,6 +713,7 @@ function moveAdventurePlayerIndependent(point, reason = "click", options = {}) {
       const flip = player.facing === -1 ? -1 : 1;
       const sc = Number(player.scale || 1);
       el.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${sc * flip}, ${sc}) rotate(${Number(player.rotation || 0)}deg)`;
+      if (typeof computeVisualDepthZ === "function") el.style.zIndex = String(computeVisualDepthZ(player));
       el.dataset.floorMoved = "1";
     } else if (typeof updateObjectElement === "function") {
       updateObjectElement(player);
@@ -2890,6 +2892,7 @@ function beginPlaySession() {
   if (typeof applyPathBlockerMemory === "function") applyPathBlockerMemory();
 
   const selected = state.project?.scenes?.find(s => s.id === state.selectedSceneId);
+  if (typeof normalizeSceneParallaxLayers === "function") normalizeSceneParallaxLayers(selected);
   if (typeof syncScenePathfindingFromPlayer === "function") syncScenePathfindingFromPlayer(selected);
   const selectedHasPlayer = !!selected?.objects?.some(o => o.type === "player");
   if (typeof isPathfindingLabScene === "function" && isPathfindingLabScene(selected)) {
@@ -2913,6 +2916,7 @@ function beginPlaySession() {
   state.playSceneId = state.project.startSceneId || state.selectedSceneId;
 
   const playScene = state.project?.scenes?.find(s => s.id === state.playSceneId);
+  if (typeof normalizeSceneParallaxLayers === "function") normalizeSceneParallaxLayers(playScene);
   if (typeof syncScenePathfindingFromPlayer === "function") syncScenePathfindingFromPlayer(playScene);
   if (typeof isPathfindingLabScene === "function" && isPathfindingLabScene(playScene)) {
     normalizePathfindingLabRuntimeScene(playScene);
@@ -3289,6 +3293,7 @@ function teleportPlayerDomOnly(label = "DOM teleport") {
   const flip = player.facing === -1 ? -1 : 1;
   const sc = Number(player.scale || 1);
   el.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${sc * flip}, ${sc}) rotate(${Number(player.rotation || 0)}deg)`;
+  if (typeof computeVisualDepthZ === "function") el.style.zIndex = String(computeVisualDepthZ(player));
   el.style.outline = "4px solid #ffda50";
   el.style.filter = "drop-shadow(0 0 12px rgba(255,218,80,.95))";
   el.dataset.domTeleported = "1";

@@ -3860,7 +3860,7 @@ body {
 
 /* Beta 0.7.11: click-to-move robusto en Play */
 .play {
-  cursor: crosshair;
+  cursor: default;
 }
 
 .play .sceneObject.player {
@@ -3945,8 +3945,8 @@ body {
   inset: 0;
   z-index: 12000;
   background: transparent;
-  pointer-events: auto;
-  cursor: crosshair;
+  pointer-events: none;
+  cursor: default;
 }
 
 .playClickCatcherLayer.hidden {
@@ -4008,11 +4008,9 @@ body {
 }
 
 
-/* Beta 0.7.20: build de diagnóstico sin pathfinding */
-.pathfindingDebugPath,
-.pathfindingDebugPoint,
+/* La visibilidad del debug de pathfinding la controla scene.pathfinding.debug. */
 #pathfindingDebugLayer {
-  display: none !important;
+  pointer-events: none;
 }
 
 .sceneObject.player[data-no-pathfinding-moved="1"],

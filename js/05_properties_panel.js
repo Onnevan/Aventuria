@@ -48,6 +48,38 @@ function syncPathBlockerFromPropertiesPanel() {
 }
 
 
+function syncObjectPhysicsFromPropertiesPanel() {
+  const obj = selectedObject?.();
+  const enabledEl = $("propPhysicsEnabled");
+  if (!obj || !enabledEl) return false;
+  const ph = normalizeObjectPhysics(obj);
+
+  if (obj.type === "player" && !obj.physicsAsMatterBody) {
+    ph.enabled = false;
+    enabledEl.checked = false;
+    return true;
+  }
+
+  ph.enabled = enabledEl.checked === true;
+  [
+    ["propPhysicsBodyType", "bodyType", "value"],
+    ["propPhysicsShape", "shape", "value"],
+    ["propPhysicsMass", "mass", "number"],
+    ["propPhysicsDensity", "density", "number"],
+    ["propPhysicsFriction", "friction", "number"],
+    ["propPhysicsRestitution", "restitution", "number"],
+    ["propPhysicsLockRotation", "lockRotation", "checked"],
+    ["propPhysicsStartSleeping", "startSleeping", "checked"]
+  ].forEach(([id, field, mode]) => {
+    const el = $(id);
+    if (!el) return;
+    ph[field] = mode === "checked" ? el.checked === true : (mode === "number" ? Number(el.value) : el.value);
+  });
+  normalizeObjectPhysics(obj);
+  return true;
+}
+
+
 function updateWalkAnimationHint(obj) {
   const status = $("clipEditorStatus");
   if (!status || !obj?.sprite) return;
@@ -884,7 +916,15 @@ function renderObjectProps(obj) {
   $("propLockedMessage").value = obj.lockedMessage || "";
   renderObjectStateEditor(obj);
   renderObjectPhysicsProps(obj);
-  $("propParallaxLayer").value = String(obj.parallaxLayer ?? 0);
+  obj.parallaxLayer = typeof normalizeParallaxLayer === "function" ? normalizeParallaxLayer(obj.parallaxLayer) : 0;
+  $("propParallaxLayer").value = String(obj.parallaxLayer);
+  const occ = typeof ensureOcclusionConfig === "function" ? ensureOcclusionConfig(obj) : (obj.occlusion ??= { enabled: obj.type !== "background", mode: "footprint", depthMode: "footprintBottom", offsetY: 0, onlyPlayers: true });
+  if ($("propOcclusionEnabled")) {
+    $("propOcclusionEnabled").checked = !!occ.enabled;
+    $("propOcclusionEnabled").disabled = obj.type === "background";
+  }
+  if ($("propOcclusionMode")) $("propOcclusionMode").value = occ.mode || "footprint";
+  if ($("propOcclusionOffsetY")) $("propOcclusionOffsetY").value = Number(occ.offsetY || 0);
   normalizeCollider(obj);
   if ($("propColliderEnabled")) {
     $("propColliderEnabled").checked = !!obj.collider.enabled;
@@ -1331,6 +1371,20 @@ function bindProps() {
   });
 
 
+  const updateSelectedOcclusion = (field, value) => {
+    const obj = selectedObject();
+    if (!obj) return;
+    const occ = typeof ensureOcclusionConfig === "function" ? ensureOcclusionConfig(obj) : (obj.occlusion ??= {});
+    occ[field] = value;
+    if (field === "enabled" && obj.type === "background") occ.enabled = false;
+    if (typeof normalizeObjectOcclusion === "function") normalizeObjectOcclusion(obj);
+    renderStage();
+    renderProperties();
+  };
+  if ($("propOcclusionEnabled")) $("propOcclusionEnabled").addEventListener("change", e => updateSelectedOcclusion("enabled", e.target.checked));
+  if ($("propOcclusionMode")) $("propOcclusionMode").addEventListener("change", e => updateSelectedOcclusion("mode", e.target.value));
+  if ($("propOcclusionOffsetY")) $("propOcclusionOffsetY").addEventListener("input", e => updateSelectedOcclusion("offsetY", Number(e.target.value || 0)));
+
   if ($("propColliderEnabled")) $("propColliderEnabled").addEventListener("change", e => {
     const obj = selectedObject();
     if (!obj) return;
@@ -1361,16 +1415,27 @@ function bindProps() {
     obj.collider = makeColliderPreset(obj, e.target.value, { keepEnabled: true });
     renderAll();
   });
-  if ($("editColliderBtn")) $("editColliderBtn").addEventListener("click", () => {
-    const obj = selectedObject();
-    if (!obj) return;
+  if ($("editColliderBtn")) $("editColliderBtn").addEventListener("click", e => {
+    e.preventDefault();
+    const obj = (typeof selectedObjectForColliderEditor === "function" ? selectedObjectForColliderEditor() : null) || selectedObject();
+    if (!obj) {
+      showMessage?.("Selecciona un objeto para editar su collider.");
+      return;
+    }
     openColliderEditor(obj.id);
   });
-  if ($("resetColliderBtn")) $("resetColliderBtn").addEventListener("click", () => {
-    const obj = selectedObject();
-    if (!obj) return;
+  if ($("resetColliderBtn")) $("resetColliderBtn").addEventListener("click", e => {
+    e.preventDefault();
+    const obj = (typeof selectedObjectForColliderEditor === "function" ? selectedObjectForColliderEditor() : null) || selectedObject();
+    if (!obj) {
+      showMessage?.("Selecciona un objeto para resetear su collider.");
+      return;
+    }
     obj.collider = makeColliderPreset(obj, "box", { keepEnabled: true, visible: !!obj.collider?.visible });
+    state.selectedPanel = "object";
+    state.selectedObjectId = obj.id;
     renderAll();
+    showMessage?.(`Collider reseteado: ${obj.name || obj.id}`);
   });
 
   const bindings = [
@@ -1455,7 +1520,7 @@ function bindProps() {
   if ($("propParallaxLayer")) $("propParallaxLayer").addEventListener("change", e => {
     const obj = selectedObject();
     if (!obj) return;
-    obj.parallaxLayer = Number(e.target.value);
+    obj.parallaxLayer = typeof normalizeParallaxLayer === "function" ? normalizeParallaxLayer(e.target.value) : Number(e.target.value);
     renderProperties();
     renderStage();
   });
