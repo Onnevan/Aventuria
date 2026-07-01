@@ -204,6 +204,130 @@ function physicsAddWorldBounds(engine) {
   ];
 }
 
+function physicsRuntimeBodyForObject(obj) {
+  if (!obj?.id) return null;
+  return state.physicsRuntime?.bodyByObjectId?.[obj.id] || null;
+}
+
+function physicsBodyContainsPoint(body, point) {
+  if (!body || !point) return false;
+  if (window.Matter?.Query?.point) {
+    try { return Matter.Query.point([body], point).includes(body); } catch (err) {}
+  }
+  if (window.Matter?.Bounds?.contains) {
+    try { return Matter.Bounds.contains(body.bounds, point); } catch (err) {}
+  }
+  return false;
+}
+
+function physicsPointFromPointerEvent(e) {
+  if (typeof stagePoint === "function") return stagePoint(e);
+  const rect = els.stage?.getBoundingClientRect?.();
+  const scale = Number(state.editorZoom || 1) || 1;
+  return {
+    x: rect ? (e.clientX - rect.left) / scale : Number(e.clientX || 0),
+    y: rect ? (e.clientY - rect.top) / scale : Number(e.clientY || 0)
+  };
+}
+
+function maybeRunPhysicsObjectClick(obj, e, startPoint, endPoint) {
+  if (!obj || !e || !startPoint || !endPoint) return;
+  if (Math.hypot(endPoint.x - startPoint.x, endPoint.y - startPoint.y) > 5) return;
+  const stateInteractable = typeof isObjectInteractableInCurrentState === "function" ? isObjectInteractableInCurrentState(obj) : true;
+  const isInteractive = stateInteractable && obj.action && obj.action !== "none";
+  const hasInteractionType = stateInteractable && ["item", "hotspot", "door", "character"].includes(obj.type);
+  const acceptsInventoryUse = stateInteractable && (!!obj.useItemEnabled || (!!state.selectedInventoryItemId && obj.type !== "background"));
+  if (!(isInteractive || hasInteractionType || acceptsInventoryUse)) return;
+  if (typeof shouldObjectReceivePlayClick === "function" && !shouldObjectReceivePlayClick(obj, endPoint)) return;
+  if (typeof runObjectAction === "function") runObjectAction(obj);
+}
+
+function attachPhysicsGrabHandlers(div, obj) {
+  if (!div || !obj || state.mode !== "play") return false;
+  const ph = normalizeObjectPhysics(obj);
+  const scene = currentScene();
+  if (!scene) return false;
+  const scenePh = normalizeScenePhysics(scene);
+  if (!scenePh.enabled || !ph.enabled || ph.grabbable === false || (ph.bodyType || "dynamic") !== "dynamic") return false;
+
+  div.style.pointerEvents = "auto";
+  div.style.cursor = "grab";
+  div.style.touchAction = "none";
+
+  div.onpointerdown = e => {
+    if (e.button !== undefined && e.button !== 0) return;
+    const startPoint = physicsPointFromPointerEvent(e);
+    const liveBody = physicsRuntimeBodyForObject(obj);
+    const rt = state.physicsRuntime;
+    if (!liveBody || !rt?.engine || !window.Matter?.Constraint || !window.Matter?.World) return;
+    if (!physicsBodyContainsPoint(liveBody, startPoint)) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    div.setPointerCapture?.(e.pointerId);
+    div.style.cursor = "grabbing";
+    if (window.Matter.Sleeping) Matter.Sleeping.set(liveBody, false);
+
+    const pointA = {
+      x: startPoint.x - liveBody.position.x,
+      y: startPoint.y - liveBody.position.y
+    };
+    const constraint = Matter.Constraint.create({
+      bodyA: liveBody,
+      pointA,
+      pointB: { x: startPoint.x, y: startPoint.y },
+      length: 0,
+      stiffness: 0.18,
+      damping: 0.12
+    });
+
+    Matter.World.add(rt.engine.world, constraint);
+    rt.grabConstraint = constraint;
+    rt.grabbedObjectId = obj.id;
+
+    let lastPoint = startPoint;
+    let lastT = performance.now();
+    let releaseVelocity = { x: 0, y: 0 };
+
+    const move = ev => {
+      const p = physicsPointFromPointerEvent(ev);
+      const now = performance.now();
+      const dt = Math.max(8, now - lastT);
+      releaseVelocity = {
+        x: (p.x - lastPoint.x) / dt * 16.666,
+        y: (p.y - lastPoint.y) / dt * 16.666
+      };
+      constraint.pointB.x = p.x;
+      constraint.pointB.y = p.y;
+      lastPoint = p;
+      lastT = now;
+      ev.preventDefault();
+      ev.stopPropagation();
+    };
+
+    const finish = ev => {
+      document.removeEventListener("pointermove", move, true);
+      document.removeEventListener("pointerup", finish, true);
+      document.removeEventListener("pointercancel", finish, true);
+      try { div.releasePointerCapture?.(e.pointerId); } catch (err) {}
+      div.style.cursor = "grab";
+      try { Matter.World.remove(rt.engine.world, constraint); } catch (err) {}
+      if (rt.grabConstraint === constraint) rt.grabConstraint = null;
+      if (rt.grabbedObjectId === obj.id) rt.grabbedObjectId = null;
+      if (window.Matter?.Body) Matter.Body.setVelocity(liveBody, releaseVelocity);
+      if (window.Matter.Sleeping) Matter.Sleeping.set(liveBody, false);
+      maybeRunPhysicsObjectClick(obj, ev, startPoint, lastPoint);
+      ev?.preventDefault?.();
+      ev?.stopPropagation?.();
+    };
+
+    document.addEventListener("pointermove", move, true);
+    document.addEventListener("pointerup", finish, { capture: true, once: true });
+    document.addEventListener("pointercancel", finish, { capture: true, once: true });
+  };
+
+  return true;
+}
 function startPhysicsWorldForCurrentScene({ force = false, preview = false } = {}) {
   const scene = currentScene();
   if (!scene) return false;
@@ -294,6 +418,9 @@ function forceStopPhysicsForEditor(reason = "editor") {
     if (rt?.raf) cancelAnimationFrame(rt.raf);
     if (rt?.runner && window.Matter?.Runner) {
       try { Matter.Runner.stop(rt.runner); } catch (err) {}
+    }
+    if (rt?.grabConstraint && rt?.engine && window.Matter?.World) {
+      try { Matter.World.remove(rt.engine.world, rt.grabConstraint); } catch (err) {}
     }
     if (rt?.engine && window.Matter?.World) {
       try { Matter.World.clear(rt.engine.world, false); } catch (err) {}

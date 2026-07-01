@@ -64,7 +64,8 @@ function computeObjectDepthY(obj) {
 }
 
 function computeVisualDepthZ(obj) {
-  return Math.round(computeObjectDepthY(obj));
+  if (obj?.type === "background") return Math.round(fixedObjectZIndex(obj));
+  return Math.round(computeObjectDepthY(obj) + Number(obj?.z || 0) * 1000);
 }
 
 function spriteBackgroundPosition(obj) {
@@ -879,14 +880,15 @@ function renderStage() {
         const hasInteractionType = stateInteractable && ["item", "hotspot", "door", "character"].includes(obj.type);
         const acceptsInventoryUse = stateInteractable && (!!obj.useItemEnabled || (!!state.selectedInventoryItemId && obj.type !== "background"));
 
-        if (isInteractive || hasInteractionType || acceptsInventoryUse) {
+        const canGrabPhysics = typeof attachPhysicsGrabHandlers === "function" && attachPhysicsGrabHandlers(div, obj);
+        if (!canGrabPhysics && (isInteractive || hasInteractionType || acceptsInventoryUse)) {
           div.onclick = (e) => {
             const p = stagePoint(e);
             if (!shouldObjectReceivePlayClick(obj, p)) return;
             e.stopPropagation();
             runObjectAction(obj);
           };
-        } else {
+        } else if (!canGrabPhysics) {
           // En Play, objetos decorativos o el propio player no deben bloquear
           // el click de suelo. Si bloquean el evento, movePlayerTo() no recibe el punto.
           div.style.pointerEvents = "none";

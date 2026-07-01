@@ -70,7 +70,8 @@ function syncObjectPhysicsFromPropertiesPanel() {
     ["propPhysicsFriction", "friction", "number"],
     ["propPhysicsRestitution", "restitution", "number"],
     ["propPhysicsLockRotation", "lockRotation", "checked"],
-    ["propPhysicsStartSleeping", "startSleeping", "checked"]
+    ["propPhysicsStartSleeping", "startSleeping", "checked"],
+    ["propPhysicsGrabbable", "grabbable", "checked"]
   ].forEach(([id, field, mode]) => {
     const el = $(id);
     if (!el) return;
@@ -882,6 +883,7 @@ function renderObjectPhysicsProps(obj) {
   $("propPhysicsRestitution").value = ph.restitution ?? 0.1;
   $("propPhysicsLockRotation").checked = !!ph.lockRotation;
   $("propPhysicsStartSleeping").checked = !!ph.startSleeping;
+  if ($("propPhysicsGrabbable")) $("propPhysicsGrabbable").checked = ph.grabbable !== false;
 }
 
 
@@ -1179,7 +1181,8 @@ function bindProps() {
     ["propPhysicsFriction", "friction", "number"],
     ["propPhysicsRestitution", "restitution", "number"],
     ["propPhysicsLockRotation", "lockRotation", "checked"],
-    ["propPhysicsStartSleeping", "startSleeping", "checked"]
+    ["propPhysicsStartSleeping", "startSleeping", "checked"],
+    ["propPhysicsGrabbable", "grabbable", "checked"]
   ].forEach(([id, field, mode]) => {
     if ($(id)) $(id).addEventListener(mode === "checked" ? "change" : "input", e => {
       const obj = selectedObject();

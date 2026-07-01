@@ -155,6 +155,7 @@ function defaultObjectPhysics() {
     restitution: 0.1,
     lockRotation: false,
     startSleeping: false,
+    grabbable: true,
     startX: null,
     startY: null,
     startRotation: null,
