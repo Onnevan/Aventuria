@@ -193,11 +193,13 @@ function normalizeObjectPhysics(obj) {
 
 
 
+const OCCLUSION_Z_RANGE = 10000;
+
 function defaultObjectOcclusion(obj = {}) {
   return {
     enabled: obj.type !== "background",
     mode: "footprint",
-    depthMode: "footprintBottom",
+    depthMode: "inFront",
     offsetY: 0,
     onlyPlayers: true
   };
@@ -212,7 +214,10 @@ function normalizeObjectOcclusion(obj) {
   });
   obj.occlusion.enabled = obj.type === "background" ? false : obj.occlusion.enabled !== false;
   obj.occlusion.mode = ["footprint", "bounds"].includes(obj.occlusion.mode) ? obj.occlusion.mode : d.mode;
-  obj.occlusion.depthMode = ["footprintBottom", "footprintTop", "custom"].includes(obj.occlusion.depthMode) ? obj.occlusion.depthMode : d.depthMode;
+  // Migrate legacy depthMode names
+  if (obj.occlusion.depthMode === "footprintTop") obj.occlusion.depthMode = "behind";
+  else if (obj.occlusion.depthMode === "footprintBottom") obj.occlusion.depthMode = "inFront";
+  obj.occlusion.depthMode = ["behind", "inFront", "custom"].includes(obj.occlusion.depthMode) ? obj.occlusion.depthMode : d.depthMode;
   obj.occlusion.offsetY = Number(obj.occlusion.offsetY) || 0;
   obj.occlusion.onlyPlayers = obj.occlusion.onlyPlayers !== false;
   return obj.occlusion;

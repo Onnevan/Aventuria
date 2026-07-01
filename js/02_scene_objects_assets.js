@@ -54,7 +54,7 @@ function baseObject(type, name) {
     state: "default",
     parallaxLayer: 0,
     parallax: { enabled: false, x: 0, y: 0 },
-    occlusion: typeof defaultObjectOcclusion === "function" ? defaultObjectOcclusion({ type }) : { enabled: type !== "background", mode: "footprint", depthMode: "footprintBottom", offsetY: 0, onlyPlayers: true },
+    occlusion: typeof defaultObjectOcclusion === "function" ? defaultObjectOcclusion({ type }) : { enabled: type !== "background", mode: "footprint", depthMode: "inFront", offsetY: 0, onlyPlayers: true },
     bgResize: isBg ? "cover" : "cover",
     autoFlipX: type === "player",
     facing: 1,

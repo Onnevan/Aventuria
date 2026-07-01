@@ -27,6 +27,8 @@ function objectScreenPosition(obj) {
 }
 
 
+const OCCLUSION_Z_DEPTH_PRECISION = 1000;
+
 function fixedObjectZIndex(obj) {
   return obj?.type === "background" ? 1 + Number(obj.z ?? 0) : 100 + Number(obj?.z ?? 0);
 }
@@ -46,7 +48,7 @@ function computeObjectDepthY(obj) {
   if (occ.mode === "footprint" && typeof objectHasUsableFootprint === "function" && objectHasUsableFootprint(obj)) {
     const bounds = typeof getPathFootprintWorldBounds === "function" ? getPathFootprintWorldBounds(obj) : null;
     if (bounds) {
-      if (occ.depthMode === "footprintTop") return bounds.top + offset;
+      if (occ.depthMode === "behind") return bounds.top + offset;
       return bounds.bottom + offset;
     }
   }
@@ -55,7 +57,26 @@ function computeObjectDepthY(obj) {
 }
 
 function computeVisualDepthZ(obj) {
-  return Math.round(computeObjectDepthY(obj));
+  if (!obj) return 0;
+  const depthY = computeObjectDepthY(obj);
+  const occ = obj.occlusion || {};
+
+  if (obj.type === "player") {
+    return Math.round(depthY);
+  }
+
+  if (!occ.enabled) return fixedObjectZIndex(obj);
+
+  if (occ.onlyPlayers) {
+    // Composite: manual z drives primary layer, depth Y is sub-layer
+    // This prevents prop-to-prop flickering while letting the player
+    // sort correctly based on Y position
+    const baseZ = Math.max(0, Number(obj.z ?? 0));
+    return baseZ * OCCLUSION_Z_RANGE + Math.round(depthY % OCCLUSION_Z_RANGE);
+  }
+
+  // Full dynamic: depth Y dominates, manual z is tiebreaker
+  return Math.round(depthY * OCCLUSION_Z_DEPTH_PRECISION) + Math.max(0, Number(obj.z ?? 0));
 }
 
 function objectTransform(obj) {
@@ -76,11 +97,40 @@ function spriteBackgroundPosition(obj) {
   return `${-col * fw}px ${-row * fh}px`;
 }
 
+let _depthCacheFrame = 0;
+const _depthCache = new Map();
+
+function invalidateDepthCache() {
+  _depthCache.clear();
+  _depthCacheFrame = 0;
+}
+
+function cachedComputeVisualDepthZ(obj, force = false) {
+  if (!obj) return 0;
+  if (force || !_depthCache.has(obj.id)) {
+    _depthCache.set(obj.id, computeVisualDepthZ(obj));
+  }
+  return _depthCache.get(obj.id);
+}
+
+function invalidateDepthCacheFor(obj) {
+  if (obj) _depthCache.delete(obj.id);
+}
+
+function tickDepthCache() {
+  _depthCacheFrame++;
+  if (_depthCacheFrame > 60) {
+    _depthCache.clear();
+    _depthCacheFrame = 0;
+  }
+}
+
 function updateObjectElement(obj) {
   const el = els.stage.querySelector(`[data-id="${obj.id}"]`);
   if (!el) return;
   el.style.transform = objectTransform(obj);
-  el.style.zIndex = String(computeVisualDepthZ(obj));
+  invalidateDepthCacheFor(obj);
+  el.style.zIndex = String(cachedComputeVisualDepthZ(obj));
   const bgPos = spriteBackgroundPosition(obj);
   if (bgPos) el.style.backgroundPosition = bgPos;
 }
@@ -818,19 +868,19 @@ function renderStage() {
 
   if (state.mode !== "play") renderNavZones(scene);
 
+  invalidateDepthCache();
   const cam = cameraOffsetFromPlayer();
-  const sorted = [...scene.objects].sort((a, b) => {
-    if (a.type === "background" && b.type !== "background") return -1;
-    if (b.type === "background" && a.type !== "background") return 1;
-    return (a.z ?? 0) - (b.z ?? 0);
+  // Depth sorting via z-index, DOM order is irrelevant
+  const objects = scene.objects.filter(obj => {
+    normalizeObjectStates(obj);
+    return isObjectVisibleInCurrentState(obj);
+  });
+  objects.forEach(obj => {
+    // Prewarm cache for all visible objects
+    cachedComputeVisualDepthZ(obj);
   });
 
-  sorted.forEach(obj => {
-    normalizeObjectStates(obj);
-    const runtimeState = objectStateName(obj);
-    const visibleInRuntime = isObjectVisibleInCurrentState(obj);
-    if (!visibleInRuntime) return;
-
+  objects.forEach(obj => {
     const div = document.createElement("div");
     const bgClass = obj.type === "background" ? `bg-${obj.bgResize || "cover"}` : "";
     const editorSelectionClass = (state.mode === "editor" || state.mode === "animations" || state.mode === "physics") ? `${obj.id === state.selectedObjectId ? "selected" : ""} ${obj.locked ? "locked" : ""}` : "";
@@ -838,7 +888,7 @@ function renderStage() {
     div.dataset.id = obj.id;
     div.style.width = `${obj.width}px`;
     div.style.height = `${obj.height}px`;
-    div.style.zIndex = String(computeVisualDepthZ(obj));
+    div.style.zIndex = String(cachedComputeVisualDepthZ(obj));
 
     div.style.transform = objectTransform(obj);
 
