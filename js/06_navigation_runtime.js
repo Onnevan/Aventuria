@@ -2890,6 +2890,7 @@ function beginPlaySession() {
   if (typeof applyPathBlockerMemory === "function") applyPathBlockerMemory();
 
   const selected = state.project?.scenes?.find(s => s.id === state.selectedSceneId);
+  if (typeof normalizeSceneParallaxLayers === "function") normalizeSceneParallaxLayers(selected);
   if (typeof syncScenePathfindingFromPlayer === "function") syncScenePathfindingFromPlayer(selected);
   const selectedHasPlayer = !!selected?.objects?.some(o => o.type === "player");
   if (typeof isPathfindingLabScene === "function" && isPathfindingLabScene(selected)) {
@@ -2913,6 +2914,7 @@ function beginPlaySession() {
   state.playSceneId = state.project.startSceneId || state.selectedSceneId;
 
   const playScene = state.project?.scenes?.find(s => s.id === state.playSceneId);
+  if (typeof normalizeSceneParallaxLayers === "function") normalizeSceneParallaxLayers(playScene);
   if (typeof syncScenePathfindingFromPlayer === "function") syncScenePathfindingFromPlayer(playScene);
   if (typeof isPathfindingLabScene === "function" && isPathfindingLabScene(playScene)) {
     normalizePathfindingLabRuntimeScene(playScene);

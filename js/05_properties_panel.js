@@ -884,7 +884,8 @@ function renderObjectProps(obj) {
   $("propLockedMessage").value = obj.lockedMessage || "";
   renderObjectStateEditor(obj);
   renderObjectPhysicsProps(obj);
-  $("propParallaxLayer").value = String(obj.parallaxLayer ?? 0);
+  obj.parallaxLayer = typeof normalizeParallaxLayer === "function" ? normalizeParallaxLayer(obj.parallaxLayer) : 0;
+  $("propParallaxLayer").value = String(obj.parallaxLayer);
   normalizeCollider(obj);
   if ($("propColliderEnabled")) {
     $("propColliderEnabled").checked = !!obj.collider.enabled;
@@ -1466,7 +1467,7 @@ function bindProps() {
   if ($("propParallaxLayer")) $("propParallaxLayer").addEventListener("change", e => {
     const obj = selectedObject();
     if (!obj) return;
-    obj.parallaxLayer = Number(e.target.value);
+    obj.parallaxLayer = typeof normalizeParallaxLayer === "function" ? normalizeParallaxLayer(e.target.value) : Number(e.target.value);
     renderProperties();
     renderStage();
   });

@@ -12,24 +12,14 @@ function objectScreenPosition(obj) {
 
   if (state.mode === "play") {
     const scene = currentScene();
-
-    // El Player se mueve en coordenadas de escena; desplazarlo por parallax
-    // hace que parezca clavado aunque cambien sus coordenadas reales.
-    if (obj.type === "player") return { x: px, y: py };
-
     const cam = cameraOffsetFromPlayer();
     const strength = Number(scene?.parallaxStrength ?? 0);
-    const layer = Number(obj.parallaxLayer ?? 0);
+    const layer = typeof normalizeParallaxLayer === "function" ? normalizeParallaxLayer(obj.parallaxLayer) : 0;
     const factor = parallaxLayerMultiplier(layer) * strength;
 
     if (factor) {
       px += cam.x * factor;
       py += cam.y * factor;
-    }
-
-    if (obj.type === "background" && obj.parallax?.enabled) {
-      px -= cam.x * Number(obj.parallax.x || 0);
-      py -= cam.y * Number(obj.parallax.y || 0);
     }
   }
 

@@ -344,6 +344,21 @@ function normalizeAdventurePlayerControl(obj) {
 
 
 
+function normalizeParallaxLayer(value) {
+  const n = Number(value);
+  if (n <= -1) return -1;
+  if (n >= 1) return 1;
+  return 0;
+}
+
+function normalizeSceneParallaxLayers(scene) {
+  if (!scene?.objects) return scene;
+  scene.objects.forEach(o => {
+    o.parallaxLayer = normalizeParallaxLayer(o.parallaxLayer);
+  });
+  return scene;
+}
+
 function makeMinimalScene(name = "Escena 1") {
   return {
     id: uid(),
@@ -599,7 +614,8 @@ function makePathfindingLabScene(project) {
     useItemFailMessage: "Eso no funciona.",
     initialState: "default",
     state: "default",
-    parallax: { enabled: data.type === "background" ? false : false, x: 0, y: 0 },
+    parallaxLayer: 0,
+    parallax: { enabled: false, x: 0, y: 0 },
     bgResize: data.type === "background" ? "cover" : "cover",
     autoFlipX: data.type === "player",
     facing: 1,
@@ -1164,7 +1180,8 @@ function normalizeProject(project) {
       o.useItemFailMessage ??= "Eso no funciona.";
       o.action ??= "none";
       o.audioId ??= "";
-      o.parallax ??= { enabled: false, x: 0.05, y: 0 };
+      o.parallaxLayer = typeof normalizeParallaxLayer === "function" ? normalizeParallaxLayer(o.parallaxLayer) : 0;
+      o.parallax ??= { enabled: false, x: 0, y: 0 };
       o.bgResize ??= "cover";
       o.autoFlipX ??= o.type === "player";
       o.facing ??= 1;
@@ -1185,6 +1202,7 @@ function normalizeProject(project) {
       o.transformClips ??= [];
       o.transformClips.forEach(c => normalizeTransformClip(o, c));
     });
+    normalizeSceneParallaxLayers(scene);
     syncScenePathfindingFromPlayer(scene);
   });
   if (!project.startSceneId || !project.scenes.some(s => s.id === project.startSceneId)) {
