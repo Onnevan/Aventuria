@@ -65,7 +65,13 @@ function computeObjectDepthY(obj) {
 
 function computeVisualDepthZ(obj) {
   if (obj?.type === "background") return Math.round(fixedObjectZIndex(obj));
-  return Math.round(computeObjectDepthY(obj) + Number(obj?.z || 0) * 1000);
+  const depth = computeObjectDepthY(obj) + Number(obj?.z || 0) * 1000;
+  return Math.max(-2000000000, Math.min(2000000000, Math.round(depth)));
+}
+
+function applyObjectZIndex(el, obj) {
+  if (!el) return;
+  el.style.setProperty("z-index", String(computeVisualDepthZ(obj)), "important");
 }
 
 function spriteBackgroundPosition(obj) {
@@ -83,7 +89,7 @@ function updateObjectElement(obj) {
   const el = els.stage.querySelector(`[data-id="${obj.id}"]`);
   if (!el) return;
   el.style.transform = objectTransform(obj);
-  el.style.zIndex = String(computeVisualDepthZ(obj));
+  applyObjectZIndex(el, obj);
   const bgPos = spriteBackgroundPosition(obj);
   if (bgPos) el.style.backgroundPosition = bgPos;
 }
@@ -841,7 +847,7 @@ function renderStage() {
     div.dataset.id = obj.id;
     div.style.width = `${obj.width}px`;
     div.style.height = `${obj.height}px`;
-    div.style.zIndex = String(computeVisualDepthZ(obj));
+    applyObjectZIndex(div, obj);
 
     div.style.transform = objectTransform(obj);
 
