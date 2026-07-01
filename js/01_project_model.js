@@ -193,6 +193,35 @@ function normalizeObjectPhysics(obj) {
 
 
 
+function defaultObjectOcclusion(obj = {}) {
+  return {
+    enabled: obj.type !== "background",
+    mode: "footprint",
+    depthMode: "footprintBottom",
+    offsetY: 0,
+    onlyPlayers: true
+  };
+}
+
+function normalizeObjectOcclusion(obj) {
+  if (!obj) return defaultObjectOcclusion();
+  const d = defaultObjectOcclusion(obj);
+  obj.occlusion ??= {};
+  Object.keys(d).forEach(k => {
+    if (obj.occlusion[k] === undefined || obj.occlusion[k] === null) obj.occlusion[k] = d[k];
+  });
+  obj.occlusion.enabled = obj.type === "background" ? false : obj.occlusion.enabled !== false;
+  obj.occlusion.mode = ["footprint", "bounds"].includes(obj.occlusion.mode) ? obj.occlusion.mode : d.mode;
+  obj.occlusion.depthMode = ["footprintBottom", "footprintTop", "custom"].includes(obj.occlusion.depthMode) ? obj.occlusion.depthMode : d.depthMode;
+  obj.occlusion.offsetY = Number(obj.occlusion.offsetY) || 0;
+  obj.occlusion.onlyPlayers = obj.occlusion.onlyPlayers !== false;
+  return obj.occlusion;
+}
+
+function ensureOcclusionConfig(obj) {
+  return normalizeObjectOcclusion(obj);
+}
+
 function defaultPathfindingSettings() {
   return {
     enabled: true,
@@ -261,6 +290,26 @@ function objectPathFootprintRect(obj, padding = 0) {
     shape: fp.shape || "ellipse",
     source: "pathFootprint"
   };
+}
+
+function getPathFootprintWorldBounds(obj) {
+  const rect = typeof objectPathFootprintRect === "function" ? objectPathFootprintRect(obj, 0) : null;
+  if (!rect) return null;
+  return {
+    left: rect.x,
+    top: rect.y,
+    right: rect.x + rect.width,
+    bottom: rect.y + rect.height,
+    width: rect.width,
+    height: rect.height,
+    shape: rect.shape,
+    source: rect.source
+  };
+}
+
+function objectHasUsableFootprint(obj) {
+  const fp = obj ? normalizePathFootprint(obj) : null;
+  return !!(fp?.enabled && Number(fp.width || 0) > 0 && Number(fp.height || 0) > 0);
 }
 
 function pointInObjectPathFootprint(point, obj, padding = 0) {
@@ -616,6 +665,7 @@ function makePathfindingLabScene(project) {
     state: "default",
     parallaxLayer: 0,
     parallax: { enabled: false, x: 0, y: 0 },
+    occlusion: defaultObjectOcclusion({ type: data.type }),
     bgResize: data.type === "background" ? "cover" : "cover",
     autoFlipX: data.type === "player",
     facing: 1,
@@ -794,6 +844,7 @@ function makeComplexPathfindingLabScene(project) {
     initialState: "default",
     state: "default",
     parallax: { enabled: false, x: 0, y: 0 },
+    occlusion: defaultObjectOcclusion({ type: data.type }),
     bgResize: data.type === "background" ? "cover" : "cover",
     autoFlipX: data.type === "player",
     facing: 1,
@@ -1196,6 +1247,7 @@ function normalizeProject(project) {
       o.inventoryKey ??= o.inventorySourceId || o.id;
       normalizeObjectStates(o);
       normalizeObjectPhysics(o);
+      normalizeObjectOcclusion(o);
       o.collider ??= defaultColliderForObject(o);
       normalizePathFootprint(o);
       normalizeAdventurePlayerControl(o);

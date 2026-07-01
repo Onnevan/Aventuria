@@ -27,6 +27,32 @@ function objectScreenPosition(obj) {
 }
 
 
+function fixedObjectZIndex(obj) {
+  return obj?.type === "background" ? 1 + Number(obj.z ?? 0) : 100 + Number(obj?.z ?? 0);
+}
+
+function computeObjectDepthY(obj) {
+  if (!obj) return 0;
+  const occ = typeof ensureOcclusionConfig === "function" ? ensureOcclusionConfig(obj) : (obj.occlusion || {});
+  if (!occ.enabled) return fixedObjectZIndex(obj);
+
+  const offset = Number(occ.offsetY || 0);
+  if (occ.mode === "footprint" && typeof objectHasUsableFootprint === "function" && objectHasUsableFootprint(obj)) {
+    const bounds = typeof getPathFootprintWorldBounds === "function" ? getPathFootprintWorldBounds(obj) : null;
+    if (bounds) {
+      if (occ.depthMode === "footprintTop") return bounds.top + offset;
+      return bounds.bottom + offset;
+    }
+  }
+
+  const scale = Number(obj.scale || 1);
+  return Number(obj.y || 0) + Number(obj.height || 0) * scale + offset;
+}
+
+function computeVisualDepthZ(obj) {
+  return Math.round(computeObjectDepthY(obj));
+}
+
 function objectTransform(obj) {
   const p = objectScreenPosition(obj);
   const flip = obj.facing === -1 ? -1 : 1;
@@ -49,6 +75,7 @@ function updateObjectElement(obj) {
   const el = els.stage.querySelector(`[data-id="${obj.id}"]`);
   if (!el) return;
   el.style.transform = objectTransform(obj);
+  el.style.zIndex = String(computeVisualDepthZ(obj));
   const bgPos = spriteBackgroundPosition(obj);
   if (bgPos) el.style.backgroundPosition = bgPos;
 }
@@ -806,7 +833,7 @@ function renderStage() {
     div.dataset.id = obj.id;
     div.style.width = `${obj.width}px`;
     div.style.height = `${obj.height}px`;
-    div.style.zIndex = obj.type === "background" ? 1 + (obj.z ?? 0) : 100 + (obj.z ?? 0);
+    div.style.zIndex = String(computeVisualDepthZ(obj));
 
     div.style.transform = objectTransform(obj);
 

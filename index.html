@@ -753,6 +753,21 @@
             <p class="hint">Si está activo, el A* rodea este objeto aunque no esté usando Matter.js.</p>
           </div>
 
+          <div class="props occlusionPropsBlock" id="occlusionPropsBlock">
+            <h3>Occlusion / profundidad</h3>
+            <label class="check"><input id="propOcclusionEnabled" type="checkbox" /> Usar orden dinamico</label>
+            <div class="grid2">
+              <label>Modo
+                <select id="propOcclusionMode">
+                  <option value="footprint">Huella</option>
+                  <option value="bounds">Caja del objeto</option>
+                </select>
+              </label>
+              <label>Offset Y <input id="propOcclusionOffsetY" type="number" step="1" /></label>
+            </div>
+            <p class="hint">Usa la huella de pathfinding como referencia de suelo; si no hay huella, usa la caja del objeto.</p>
+          </div>
+
           <div class="props colliderPropsBlock" id="colliderPropsBlock">
             <h3>Collider</h3>
             <label class="check"><input id="propColliderEnabled" type="checkbox" /> Activar collider</label>

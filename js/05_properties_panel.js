@@ -886,6 +886,13 @@ function renderObjectProps(obj) {
   renderObjectPhysicsProps(obj);
   obj.parallaxLayer = typeof normalizeParallaxLayer === "function" ? normalizeParallaxLayer(obj.parallaxLayer) : 0;
   $("propParallaxLayer").value = String(obj.parallaxLayer);
+  const occ = typeof ensureOcclusionConfig === "function" ? ensureOcclusionConfig(obj) : (obj.occlusion ??= { enabled: obj.type !== "background", mode: "footprint", depthMode: "footprintBottom", offsetY: 0, onlyPlayers: true });
+  if ($("propOcclusionEnabled")) {
+    $("propOcclusionEnabled").checked = !!occ.enabled;
+    $("propOcclusionEnabled").disabled = obj.type === "background";
+  }
+  if ($("propOcclusionMode")) $("propOcclusionMode").value = occ.mode || "footprint";
+  if ($("propOcclusionOffsetY")) $("propOcclusionOffsetY").value = Number(occ.offsetY || 0);
   normalizeCollider(obj);
   if ($("propColliderEnabled")) {
     $("propColliderEnabled").checked = !!obj.collider.enabled;
@@ -1331,6 +1338,20 @@ function bindProps() {
     $("statusText").textContent = `Escena inicial: ${scene.name}`;
   });
 
+
+  const updateSelectedOcclusion = (field, value) => {
+    const obj = selectedObject();
+    if (!obj) return;
+    const occ = typeof ensureOcclusionConfig === "function" ? ensureOcclusionConfig(obj) : (obj.occlusion ??= {});
+    occ[field] = value;
+    if (field === "enabled" && obj.type === "background") occ.enabled = false;
+    if (typeof normalizeObjectOcclusion === "function") normalizeObjectOcclusion(obj);
+    renderStage();
+    renderProperties();
+  };
+  if ($("propOcclusionEnabled")) $("propOcclusionEnabled").addEventListener("change", e => updateSelectedOcclusion("enabled", e.target.checked));
+  if ($("propOcclusionMode")) $("propOcclusionMode").addEventListener("change", e => updateSelectedOcclusion("mode", e.target.value));
+  if ($("propOcclusionOffsetY")) $("propOcclusionOffsetY").addEventListener("input", e => updateSelectedOcclusion("offsetY", Number(e.target.value || 0)));
 
   if ($("propColliderEnabled")) $("propColliderEnabled").addEventListener("change", e => {
     const obj = selectedObject();
