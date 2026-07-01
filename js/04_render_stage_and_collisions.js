@@ -34,9 +34,15 @@ function fixedObjectZIndex(obj) {
 function computeObjectDepthY(obj) {
   if (!obj) return 0;
   const occ = typeof ensureOcclusionConfig === "function" ? ensureOcclusionConfig(obj) : (obj.occlusion || {});
+  const offset = Number(occ.offsetY || 0);
+  const scale = Number(obj.scale || 1);
+
+  if (obj.type === "player") {
+    return Number(obj.y || 0) + Number(obj.height || 0) * scale + offset;
+  }
+
   if (!occ.enabled) return fixedObjectZIndex(obj);
 
-  const offset = Number(occ.offsetY || 0);
   if (occ.mode === "footprint" && typeof objectHasUsableFootprint === "function" && objectHasUsableFootprint(obj)) {
     const bounds = typeof getPathFootprintWorldBounds === "function" ? getPathFootprintWorldBounds(obj) : null;
     if (bounds) {
@@ -45,7 +51,6 @@ function computeObjectDepthY(obj) {
     }
   }
 
-  const scale = Number(obj.scale || 1);
   return Number(obj.y || 0) + Number(obj.height || 0) * scale + offset;
 }
 
